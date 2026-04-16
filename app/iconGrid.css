@@ -1,0 +1,54 @@
+.container {
+  display: grid;
+  grid-template-columns: repeat(9, 57px);
+  gap: 10px;
+  padding: 10px;
+  background-color: #1a1a1a;
+  border-radius: 12px;
+  user-select: none;
+  margin: 0 auto;
+  width: max-content;
+}
+
+.tile {
+  width: 57px;
+  height: 57px;
+  background-image: url("/icons/Tile_Background.png"); /* For Later*/
+  background-size: contain;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon {
+  width: 57px;
+  height: 57px;
+  cursor: grab;
+  transition: transform 0.1s ease, opacity 0.2s;
+  -webkit-user-drag: element;
+}
+
+.icon:hover {
+  transform: scale(1.1);
+}
+
+.icon:active {
+  cursor: grabbing;
+}
+
+/* Add a class for when icons are disappearing */
+.fade-out {
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+.isSlot {
+  filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.7));
+}
+
+.centerZone {
+  outline: 3px solid #ffd700;
+  outline-offset: -3px;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+  z-index: 5;
+}
