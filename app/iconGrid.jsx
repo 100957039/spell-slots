@@ -8,6 +8,7 @@ import './iconGrid.css';
 function IconGrid({num}){
   // Initialize Icons
   const [iconList, setIconList] = useState([]);
+  const [gameOver, setGameOver] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
 
   const dragItem = useRef(null);
@@ -122,7 +123,7 @@ function IconGrid({num}){
     return slotList;
   }
 
-  function genRandIcon(index, excludeType = ""){
+  function genRandIcon(index, excludeType = "", genSlotIcon = false){
     const ICON_CHANCE = 100;
     let icon = {
       id: "",
@@ -131,8 +132,14 @@ function IconGrid({num}){
       type: "",
       isSlot: false
     }
+    let iconType;
 
-    const iconType = Math.floor(Math.random() * ICON_CHANCE);
+    if(genSlotIcon){
+      iconType = 100;
+    } else {
+      iconType = Math.floor(Math.random() * ICON_CHANCE);
+    }
+    
     
     if(iconType < 16){
       // Water
@@ -257,11 +264,11 @@ function IconGrid({num}){
   }
 
   function checkInitialMatches (currentIndex, type, boardToCheck){
-    const CHECK_VERTICAL = num;
+    const checkVertical = num;
     const CHECK_HORIZONTAL = 1;
     const MIN_COORD = 1;
     const checkList = [
-      [CHECK_VERTICAL, (CHECK_VERTICAL*2)],
+      [checkVertical, (checkVertical*2)],
       [CHECK_HORIZONTAL, (CHECK_HORIZONTAL*2)]
     ];
     const indexX = currentIndex % num;
@@ -287,6 +294,8 @@ function IconGrid({num}){
   if (!hasMounted) return null;
 
   const dragstartHandler = (ev) => {
+    if (gameOver) return;
+
     dragItem.current = ev.target;
     ev.dataTransfer.setData("text", ev.target.id);
     ev.dataTransfer.effectAllowed = "move";
@@ -305,6 +314,8 @@ function IconGrid({num}){
   };
 
   const dropHandler = (ev) => {
+    if(gameOver) return;
+
     ev.preventDefault();
     const draggedId = ev.dataTransfer.getData("text");
     const targetId = ev.target.id;
@@ -321,26 +332,31 @@ function IconGrid({num}){
     tempBoard[index1] = { ...item2, id: item1.id, grid: item1.grid };
     tempBoard[index2] = { ...item1, id: item2.id, grid: item2.grid };
 
+    const {matchType, indexes} = isValidMove(tempBoard, item1, item2);
 
     // Ensures move is allowed
-    if (isAdjacent(item1.grid, item2.grid) && isValidMove(tempBoard, item1, item2)) {
+    if (isAdjacent(item1.grid, item2.grid) && matchType.length > 0) {
       const newIcons = [...iconList];
 
       newIcons[index1] = { ...item2, id: item1.id, grid: item1.grid };
       newIcons[index2] = { ...item1, id: item2.id, grid: item2.grid };
 
       setIconList(newIcons);
+      //processMatch(matchType, indexes);
+      if(checkWin()){
+        setGameOver(true);
+      }
     }
     
     if (dragItem.current) dragItem.current.style.opacity = '1';
   }; 
 
   const isAdjacent = (grid1, grid2) => {
-    const CHECK_VERTICAL = 9;
+    const checkVertical = num;
     const CHECK_HORIZONTAL = 1;
     const checkList = [
-      grid1 - CHECK_VERTICAL,
-      grid1 + CHECK_VERTICAL,
+      grid1 - checkVertical,
+      grid1 + checkVertical,
       grid1 - CHECK_HORIZONTAL,
       grid1 + CHECK_HORIZONTAL
     ];
@@ -354,63 +370,167 @@ function IconGrid({num}){
   };
 
   const isValidMove = (tempIconList, item1, item2) => {
-    const CHECK_VERTICAL = num;
+    console.log(`\nStart\n`);
+    const checkVertical = num;
     const CHECK_HORIZONTAL = 1;
+    const centerSquare = Math.floor((num * num) / 2);
+    const isCenterSquare = (
+      (item1.grid >= (centerSquare - 1)) &&
+      (item1.grid <= (centerSquare + 1)) ||
+      (item2.grid >= (centerSquare - 1)) &&
+      (item2.grid <= (centerSquare + 1))
+    );
     const MIN_COORD = 1;
-    const MAX_COORD = num - 2;
+    const maxCoord = num - 2;
+    const MATCH_TYPE = [
+      "up",
+      "left",
+      "down",
+      "right",
+      "vertical",
+      "horizontal",
+      "slot"
+    ];
     // Check Up, Left, Down, Right, Vertical, Horizontal
     const checkList = [
-      [CHECK_VERTICAL, (CHECK_VERTICAL*2)],
+      [checkVertical, (checkVertical*2)],
       [CHECK_HORIZONTAL, (CHECK_HORIZONTAL*2)],
-      [-CHECK_VERTICAL, -(CHECK_VERTICAL*2)],
+      [-checkVertical, -(checkVertical*2)],
       [-CHECK_HORIZONTAL, -(CHECK_HORIZONTAL*2)],
-      [CHECK_VERTICAL, -CHECK_VERTICAL],
+      [checkVertical, -checkVertical],
       [CHECK_HORIZONTAL, -CHECK_HORIZONTAL],
     ];
-    const matchName = [
-            "Up",
-            "Left",
-            "Down",
-            "Right",
-            "Vertical",
-            "Horizontal"
-          ];
-    const itemList = [item2, item1, item2];
+    const itemList = [tempIconList[item2.grid], tempIconList[item1.grid]];
+    let matchType = [];
+    let indexes = [];
 
     // Slot icons can always be switched with each other
     if(item1.isSlot && item2.isSlot){
-      return true;
+      matchType.push(MATCH_TYPE[6]); 
+      indexes.push([item1.grid, item2.grid]);
 
-    } else {
-      for(let i = 0; i < (itemList.length - 1); i++){
+    } else if(!isCenterSquare) {
+      for(let i = 0; i < (itemList.length); i++){
+        console.log(`i = ${i}`);
         for(let j = 0; j < checkList.length; j++){
-          const indexX = itemList[i+1].grid % num;
-          const indexY = Math.floor(itemList[i+1].grid / num);
+          console.log(`j = ${j}`);
+          const indexX = itemList[i].grid % num;
+          const indexY = Math.floor(itemList[i].grid / num);
+          console.log(`Index: (${indexX}, ${indexY})`);
+          // Check Up, Left, Down, Right, Vertical, Horizontal
           const requireCheck = [
             (indexY > MIN_COORD),
             (indexX > MIN_COORD),
-            (indexY < MAX_COORD),
-            (indexX < MAX_COORD),
-            (indexY > (MIN_COORD - 1) && indexY < (MAX_COORD + 1)),
-            (indexX > (MIN_COORD - 1) && indexX < (MAX_COORD + 1))
+            (indexY < maxCoord),
+            (indexX < maxCoord),
+            (indexY > (MIN_COORD - 1) && indexY < (maxCoord + 1)),
+            (indexX > (MIN_COORD - 1) && indexX < (maxCoord + 1))
           ];
-
           const check1 = itemList[i].grid - checkList[j][0];
           const check2 = itemList[i].grid - checkList[j][1];
 
+          console.log(`Required Check: ${MATCH_TYPE[j]}, ${requireCheck[j]}`);
+          console.log(`Check 1: ${check1}\nCheck 2: ${check2}`);
+          console.log(`itemList: ${itemList[(i)].type}`);
           if(requireCheck[j]){
-            if(itemList[(i+1)].type == tempIconList[check1].type && itemList[(i+1)].type == tempIconList[check2].type){
-              return true;
+            console.log(`\nMoved Item Type: ${itemList[i].type}\nCheck 1 Type: ${tempIconList[check1].type} \nCheck 2 Type: ${tempIconList[check2].type}`);
+
+            if(itemList[(i)].type == tempIconList[check1].type && itemList[(i)].type == tempIconList[check2].type){
+              matchType.push(MATCH_TYPE[j]); 
+              indexes.push([(i), check1, check2]);
+              console.log(`Match Found: ${MATCH_TYPE[j]}`);
             }
           }
         }
       }
+    } 
+    console.log(`Matches Found: ${matchType.toString()}`);
+    console.log(`\nEnd\n`);
+    return {matchType, indexes};
+  }
+
+  const processMatch = (matchType, indexes) => {
+    const tempIconList = [...iconList];
+    const MATCH_TYPE = [
+      "up",
+      "left",
+      "down",
+      "right",
+      "vertical",
+      "horizontal",
+      "slot"
+    ];
+    const newIndexes = [...indexes];
+
+    for (let i = 0; i < newIndexes.length; i++){
+      for (let j = 0; j < matchType.length; j++){
+        switch(matchType[j]){
+          case MATCH_TYPE[0]: // Up
+            newIndexes[i] = checkBigMatch(matchType[j], newIndexes[i]);
+            break;
+          case MATCH_TYPE[1]: // Left
+            break;
+          case MATCH_TYPE[2]: // Down
+            break;
+          case MATCH_TYPE[3]: // Right
+            break;
+          case MATCH_TYPE[4]: // Vertical
+            break;
+          case MATCH_TYPE[5]: // Horizontal
+            break;
+          case MATCH_TYPE[6]: // Slot
+            break;
+        }
+      }
+    }
+    setIconList(tempIconList);
+  }
+
+  const checkBigMatch = (matchType, indexes) => {
+    const MATCH_TYPE = [
+      "up",
+      "left",
+      "down",
+      "right",
+      "vertical",
+      "horizontal",
+      "slot"
+    ];
+    const newIndexes = [...indexes];
+
+    switch(matchType[i]){
+        case MATCH_TYPE[0]: // Up
+          checkBigMatch
+          break;
+        case MATCH_TYPE[1]: // Left
+          break;
+        case MATCH_TYPE[2]: // Down
+          break;
+        case MATCH_TYPE[3]: // Right
+          break;
+        case MATCH_TYPE[4]: // Vertical
+          break;
+        case MATCH_TYPE[5]: // Horizontal
+          break;
+        case MATCH_TYPE[6]: // Slot
+          break;
+      }
+  }
+
+  const checkMatches = () => {
+
+  }
+
+  const checkWin = () => {
+    const centerSquare = Math.floor((num * num) / 2);
+    if(iconList[centerSquare - 1].type == iconList[centerSquare].type && iconList[centerSquare].type == iconList[centerSquare + 1].type){
+      return true;
     }
     return false;
   }
 
   return (
-    <div className='container'>
+    <div className='container' style={{ position: 'relative'}}>
       {iconList.map((icon) => {
         const centerSquare = Math.floor((num * num) / 2);
         const isCenterSquare = (icon.grid == (centerSquare - 1)) || (icon.grid == centerSquare) || (icon.grid == (centerSquare + 1));
@@ -433,6 +553,16 @@ function IconGrid({num}){
         </div>
       );
     })}
+
+      {gameOver && (
+        <div className="overlay">
+          <div className="modal">
+            <h1>JACKPOT!</h1>
+            <p>You matched the center slots!</p>
+            <button onClick={() => window.location.reload()}>Play Again</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
