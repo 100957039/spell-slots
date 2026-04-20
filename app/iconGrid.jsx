@@ -381,8 +381,8 @@ function IconGrid({num}){
         const finalBoard = processMatch(indexes, tempBoard);
         console.log("Final Board");
         finalBoard.forEach(icon => {
-        console.log(`Icon Type: ${icon.type}\n Index: ${icon.grid}`);
-      });
+          console.log(`Icon Type: ${icon.type}\n Index: ${icon.grid}`);
+        });
         return finalBoard;
       }
       
@@ -476,7 +476,7 @@ function IconGrid({num}){
           if(requireCheck[j]){
             console.log(`\nMoved Item Type: ${itemList[i].type}\nCheck 1 Type: ${tempIconList[check1].type} \nCheck 2 Type: ${tempIconList[check2].type}`);
 
-            if(itemList[i].type == tempIconList[check1].type && itemList[(i)].type == tempIconList[check2].type){
+            if(itemList[i].type == tempIconList[check1].type && itemList[(i)].type == tempIconList[check2].type && !itemList[i].isSlot){
               matchType.push(MATCH_TYPE[j]); 
               indexes.push(itemList[i].grid, check1, check2);
               console.log(`Match Found: ${MATCH_TYPE[j]}\n Item #${2-i}, itemList[i].grid: ${itemList[i].grid}, check1: ${check1}, check2: ${check2},`);
@@ -490,128 +490,10 @@ function IconGrid({num}){
     return indexes;
   }
 
-  // const processMatch = (indexes, tempBoard) => {
-  //   const gridNumber = num;
-  //   const CHECK_HORIZONTAL = 1;
-  //   const BASIC_MATCH = 3;
-  //   const centerSquare = Math.floor((num * num) / 2);
-  //   const tempIconList = [...tempBoard];
-  //   let newIndexes = [];
-
-  //   // If move was between 2 slot icons, stop processing
-  //   if(indexes.length >= BASIC_MATCH){
-
-  //     // Remove duplicate indexes
-  //     for (let i = 0; i < indexes.length; i++){
-  //       console.log(`Matched Indexes: ${indexes[i]}`);
-  //       if(!newIndexes.includes(indexes[i])){
-  //         console.log(`New Index: ${indexes[i]}`);
-  //         newIndexes.push(indexes[i]);
-  //       }
-  //     }
-
-  //     console.log(`New Index Length: ${indexes.length}`);
-
-  //     // Set the matched Icons to null
-  //     newIndexes.forEach(index => {
-  //       console.log(`Changed to null: Index: ${index}\n Prev Type: ${tempIconList[index].type}`);
-  //       tempIconList[index].type = null; 
-  //       console.log(`Changed to null: Index: ${index}\n New Type: ${tempIconList[index].type}`);
-  //     });
-
-  //     // If matching above basic, make moved icon a slot symbol
-  //     if(newIndexes.length > BASIC_MATCH) {
-  //       console.log(`Above Basic: ${newIndexes.length}`);
-  //       const newSlot = genRandIcon(newIndexes[0], "", true);
-  //       tempIconList[newIndexes[0]] = {...newSlot, isNewSlot: true};
-  //       console.log(`New Slot Symbol: ${tempIconList[newIndexes[0]].type}`);
-  //       console.log(`New first Index: ${newIndexes[0]}`);
-  //     }
-
-  //     console.log(`\n#####START#####\n`);
-  //     // Go through each row of the board
-  //     for (let i = 0; i < gridNumber; i++) {
-  //       let nextIndex;
-  //       // Checks through each column and moves icon down if there's null icons
-  //       for (let j = gridNumber - 1; j >= 0; j--) {
-  //         let index = j * gridNumber + i;
-
-  //         // Skip new slot icons
-  //         if (tempIconList[index].isNewSlot) continue;
-          
-  //         if(nextIndex === undefined){
-  //           nextIndex = index;
-  //         }
-
-  //         nextIndex -= gridNumber;
-
-  //         console.log(`Index: ${index}, nextIndex: ${nextIndex}`);
-  //         // Generate new icon if the top has been reached
-  //         if (nextIndex < 0 && tempIconList[index].type == null) {
-  //           console.log(`Top Reached: Before Generation: ${tempIconList[index].type}`);
-  //           const newIcon = genRandIcon(index);
-  //           tempIconList[index] = {...newIcon, isFalling: true};
-
-  //           console.log(`Top Reached: New Icon: ${tempIconList[index].type}`);
-
-  //         } else if(tempIconList[index].type == null) {
-  //           console.log(`Null found, switching Icons`);
-            
-  //           // Switch the null icon with the icon above
-  //           const item1 = tempIconList[index];
-  //           let item2 = tempIconList[nextIndex];
-
-  //           while(item2.type == null && newIndexes.includes(nextIndex) || item2.isNewSlot){
-  //             console.log(`Part of Match: ${nextIndex}`);
-  //             nextIndex -= gridNumber;
-  //             if(nextIndex > 0){
-  //               item2 = tempIconList[nextIndex];
-  //               console.log(`Changed: ${nextIndex}`);
-  //             } else {
-  //               console.log(`Reached the top: ${nextIndex}`);
-  //               break;
-  //             }
-  //           }
-
-  //           if (nextIndex > 0) {
-  //             console.log(`Before change: ${item1.type}, ${item2.type}`);
-
-  //             tempIconList[index] = { ...item2, id: item1.id, grid: item1.grid, isFalling: true };
-  //             tempIconList[nextIndex] = { ...item1, id: item2.id, grid: item2.grid, isFalling: true };
-
-  //             console.log(`After change: ${tempIconList[index].type}, ${tempIconList[nextIndex].type}`);
-  //           }
-  //         }
-  //       }
-  //     }      
-
-  //     setIconList(() => [...tempIconList]);
-
-  //     console.log("####Process List####");
-  //     tempIconList.forEach(icon => {
-  //       console.log(`Icon Type: ${icon.type}\n Index: ${icon.grid}`);
-  //     });
-
-  //     // Resets falling animation
-  //     setTimeout(() => {
-  //       setIconList(currentList => 
-  //         currentList.map(icon => ({ ...icon, isFalling: false, isNewSlot: false }))
-  //       );
-  //     }, 300);
-  //   }
-
-  //   if(checkWin(tempIconList)){
-  //     setGameOver(true);
-  //   }
-  //   console.log(`\n#####END#####\n`);
-  //   return tempIconList;
-    
-  // };
-
   const processMatch = (indexes, tempBoard) => {
     const gridNumber = num;
     const BASIC_MATCH = 3;
-    const tempIconList = [...tempBoard];
+    let tempIconList = [...tempBoard];
     let newIndexes = [];
 
     // If move was between 2 slot icons, stop processing
@@ -724,14 +606,64 @@ function IconGrid({num}){
     if(checkWin(tempIconList)){
       setGameOver(true);
     }
-    console.log(`\n#####END#####\n`);
-    return tempIconList;
     
+    let hasMatch = true;
+
+    while(hasMatch){
+      hasMatch = false;
+      const matchedIndexes = checkMatches(tempIconList);
+      
+      if(matchedIndexes.length > 0){
+        hasMatch = true;
+        const newBoard = processMatch(matchedIndexes, tempIconList);
+        tempIconList = [...newBoard];
+      }
+    }
+
+    return tempIconList;
   };
 
   // Checks the whole board after a move is completed for cascading matches
-  const checkMatches = () => {
+  function checkMatches(tempIconList) {
+    const indexes = new Set();
+    const size = num;
 
+    for (let i = 0; i < tempIconList.length; i++) {
+      const x = i % size;
+      const y = Math.floor(i / size);
+      const current = tempIconList[i];
+
+      // Skip nulls or empty types
+      if (!current.type) continue;
+
+      // --- CHECK HORIZONTAL (Right) ---
+      // Only check if we have at least 2 tiles remaining to the right
+      if (x <= size - 3) {
+        const right1 = tempIconList[i + 1];
+        const right2 = tempIconList[i + 2];
+        
+        if (current.type === right1.type && current.type === right2.type) {
+          indexes.add(i);
+          indexes.add(i + 1);
+          indexes.add(i + 2);
+        }
+      }
+
+      // --- CHECK VERTICAL (Down) ---
+      // Only check if we have at least 2 tiles remaining below
+      if (y <= size - 3) {
+        const down1 = tempIconList[i + size];
+        const down2 = tempIconList[i + (size * 2)];
+
+        if (current.type === down1.type && current.type === down2.type) {
+          indexes.add(i);
+          indexes.add(i + size);
+          indexes.add(i + (size * 2));
+        }
+      }
+    }
+
+    return Array.from(indexes);
   }
 
   const checkWin = (tempBoard) => {
