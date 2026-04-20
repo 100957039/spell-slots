@@ -85,3 +85,65 @@
   font-weight: bold;
   border-radius: 4px;
 }
+
+/* The icon itself will slide from above to its current position */
+.iconFalling {
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  0% {
+    transform: translateY(-50px); /* Start slightly above its final spot */
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(0); /* End at its natural spot */
+    opacity: 1;
+  }
+}
+
+/* Optional: Add a "pop" for newly generated icons */
+.iconNew {
+  animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popIn {
+  0% { transform: scale(0); }
+  100% { transform: scale(1); }
+}
+
+/* Add this to your tile CSS if you want the "matched" squares to flash */
+.tileMatched {
+  filter: brightness(2);
+  transform: scale(1.1);
+  transition: all 0.2s;
+}
+
+/* High-impact forward pop for special icon creation */
+.iconPopForward {
+  animation: popForwardElastic 0.8s cubic-bezier(0.175, 0.885, 0.32, 1);
+  z-index: 20; /* Ensure it pops over everything else */
+  
+  /* Optional: Enhance the impact with brightness and glow */
+  filter: brightness(2) drop-shadow(0 0 15px gold);
+}
+
+@keyframes popForwardElastic {
+  0% { 
+    transform: scale(0); 
+    opacity: 0; 
+  }
+  30% { 
+    /* The peak "impact" point */
+    transform: scale(2); 
+    opacity: 1; 
+  }
+  60% { 
+    /* Slight compression before settling */
+    transform: scale(0.9); 
+  }
+  100% { 
+    /* Back to natural size */
+    transform: scale(1); 
+  }
+}

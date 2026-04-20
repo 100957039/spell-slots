@@ -63,7 +63,7 @@ function IconGrid({num}){
   function genSlots(){
     const ICON_CHANCE = 100;
     const NUM_OF_SLOTS = 3;
-    const slotList = [];
+    let slotList = [];
 
     for(let i=0; i < NUM_OF_SLOTS; i++){
       // Slot symbol
@@ -76,7 +76,9 @@ function IconGrid({num}){
           grid: 0,
           src: "/icons/Heart_Icon.png",
           type: "heart",
-          isSlot: true
+          isSlot: true,
+          isFalling: false,
+          isNewSlot: false
         })
       
       } else if(slotType < 50){
@@ -86,7 +88,9 @@ function IconGrid({num}){
           grid: 0,
           src: "/icons/Diamond_Icon.png",
           type: "diamond",
-          isSlot: true
+          isSlot: true,
+          isFalling: false,
+          isNewSlot: false
         })
 
       } else if(slotType < 75){
@@ -96,7 +100,9 @@ function IconGrid({num}){
           grid: 0,
           src: "/icons/Spade_Icon.png",
           type: "spade",
-          isSlot: true
+          isSlot: true,
+          isFalling: false,
+          isNewSlot: false
         })
 
       } else if(slotType < 95){
@@ -106,7 +112,9 @@ function IconGrid({num}){
           grid: 0,
           src: "/icons/Clover_Icon.png",
           type: "clover",
-          isSlot: true
+          isSlot: true,
+          isFalling: false,
+          isNewSlot: false
         })
 
       } else {
@@ -116,9 +124,15 @@ function IconGrid({num}){
           grid: 0,
           src: "/icons/7_Icon.png",
           type: "7",
-          isSlot: true
+          isSlot: true,
+          isFalling: false,
+          isNewSlot: false
         })
       }
+    }
+    // Ensures the slots can't start as all the same
+    if(slotList[0].type == slotList[1].type && slotList[0].type == slotList[2].type){
+      slotList[2] = genRandIcon(slotList[2].grid, slotList[2].type, true);
     }
     return slotList;
   }
@@ -130,7 +144,9 @@ function IconGrid({num}){
       grid: -1,
       src: "",
       type: "",
-      isSlot: false
+      isSlot: false,
+      isFalling: false,
+          isNewSlot: false
     }
     let iconType;
 
@@ -148,7 +164,9 @@ function IconGrid({num}){
         grid: index,
         src: "/icons/Water_Icon.png",
         type: "water",
-        isSlot: false
+        isSlot: false,
+        isFalling: false,
+        isNewSlot: false
       }
       
     } else if(iconType < 32){
@@ -158,7 +176,9 @@ function IconGrid({num}){
         grid: index,
         src: "/icons/Earth_Icon.png",
         type: "earth",
-        isSlot: false
+        isSlot: false,
+        isFalling: false,
+        isNewSlot: false
       }
 
     } else if(iconType < 48){
@@ -168,7 +188,9 @@ function IconGrid({num}){
         grid: index,
         src: "/icons/Fire_Icon.png",
         type: "fire",
-        isSlot: false
+        isSlot: false,
+        isFalling: false,
+        isNewSlot: false
       }
 
     } else if(iconType < 64){
@@ -178,7 +200,9 @@ function IconGrid({num}){
         grid: index,
         src: "/icons/Air_Icon.png",
         type: "air",
-        isSlot: false
+        isSlot: false,
+        isFalling: false,
+        isNewSlot: false
       }
 
     } else if(iconType < 80){
@@ -188,7 +212,9 @@ function IconGrid({num}){
         grid: index,
         src: "/icons/Salt_Icon.png",
         type: "salt",
-        isSlot: false
+        isSlot: false,
+        isFalling: false,
+        isNewSlot: false
       }
       
     } else if(iconType < 96){
@@ -198,7 +224,9 @@ function IconGrid({num}){
         grid: index,
         src: "/icons/Sulfur_Icon.png",
         type: "sulfur",
-        isSlot: false
+        isSlot: false,
+        isFalling: false,
+        isNewSlot: false
       }
       
     } else {
@@ -212,7 +240,9 @@ function IconGrid({num}){
           grid: index,
           src: "/icons/Heart_Icon.png",
           type: "heart",
-          isSlot: true
+          isSlot: true,
+          isFalling: false,
+          isNewSlot: false
         }
       
       } else if(slotType < 50){
@@ -222,7 +252,9 @@ function IconGrid({num}){
           grid: index,
           src: "/icons/Diamond_Icon.png",
           type: "diamond",
-          isSlot: true
+          isSlot: true,
+          isFalling: false,
+          isNewSlot: false
         }
 
       } else if(slotType < 75){
@@ -232,7 +264,9 @@ function IconGrid({num}){
           grid: index,
           src: "/icons/Spade_Icon.png",
           type: "spade",
-          isSlot: true
+          isSlot: true,
+          isFalling: false,
+          isNewSlot: false
         }
 
       } else if(slotType < 95){
@@ -242,7 +276,9 @@ function IconGrid({num}){
           grid: index,
           src: "/icons/Clover_Icon.png",
           type: "clover",
-          isSlot: true
+          isSlot: true,
+          isFalling: false,
+          isNewSlot: false
         }
 
       } else {
@@ -252,12 +288,14 @@ function IconGrid({num}){
           grid: index,
           src: "/icons/7_Icon.png",
           type: "7",
-          isSlot: true
+          isSlot: true,
+          isFalling: false,
+          isNewSlot: false
         }
       }
     }
     if(icon.type == excludeType){
-      icon = genRandIcon(excludeType);
+      icon = genRandIcon(icon.grid, excludeType, genSlotIcon);
     }
 
     return icon;
@@ -315,38 +353,41 @@ function IconGrid({num}){
 
   const dropHandler = (ev) => {
     if(gameOver) return;
-
     ev.preventDefault();
+
     const draggedId = ev.dataTransfer.getData("text");
     const targetId = ev.target.id;
-    const tempBoard = [...iconList];
 
     if (draggedId === targetId) return;
 
-    const index1 = iconList.findIndex(icon => icon.id === draggedId);
-    const index2 = iconList.findIndex(icon => icon.id === targetId);
+    setIconList((currentList) => {
+      const tempBoard = [...currentList];
 
-    const item1 = iconList[index1];
-    const item2 = iconList[index2];
+      const index1 = tempBoard.findIndex(icon => icon.id === draggedId);
+      const index2 = tempBoard.findIndex(icon => icon.id === targetId);
 
-    tempBoard[index1] = { ...item2, id: item1.id, grid: item1.grid };
-    tempBoard[index2] = { ...item1, id: item2.id, grid: item2.grid };
+      const item1 = tempBoard[index1];
+      const item2 = tempBoard[index2];
 
-    const {matchType, indexes} = isValidMove(tempBoard, item1, item2);
+      // Ensures move is allowed
+      if (!isAdjacent(item1.grid, item2.grid)) return currentList;
 
-    // Ensures move is allowed
-    if (isAdjacent(item1.grid, item2.grid) && matchType.length > 0) {
-      const newIcons = [...iconList];
+      tempBoard[index1] = { ...item2, id: item1.id, grid: item1.grid };
+      tempBoard[index2] = { ...item1, id: item2.id, grid: item2.grid };
 
-      newIcons[index1] = { ...item2, id: item1.id, grid: item1.grid };
-      newIcons[index2] = { ...item1, id: item2.id, grid: item2.grid };
+      const indexes = isValidMove(tempBoard, item1, item2);
 
-      setIconList(newIcons);
-      //processMatch(matchType, indexes);
-      if(checkWin()){
-        setGameOver(true);
+      if (indexes.length > 0){
+        const finalBoard = processMatch(indexes, tempBoard);
+        console.log("Final Board");
+        finalBoard.forEach(icon => {
+        console.log(`Icon Type: ${icon.type}\n Index: ${icon.grid}`);
+      });
+        return finalBoard;
       }
-    }
+      
+      return currentList;
+    });
     
     if (dragItem.current) dragItem.current.style.opacity = '1';
   }; 
@@ -407,7 +448,7 @@ function IconGrid({num}){
     // Slot icons can always be switched with each other
     if(item1.isSlot && item2.isSlot){
       matchType.push(MATCH_TYPE[6]); 
-      indexes.push([item1.grid, item2.grid]);
+      indexes.push(item2.grid, item1.grid);
 
     } else if(!isCenterSquare) {
       for(let i = 0; i < (itemList.length); i++){
@@ -435,10 +476,10 @@ function IconGrid({num}){
           if(requireCheck[j]){
             console.log(`\nMoved Item Type: ${itemList[i].type}\nCheck 1 Type: ${tempIconList[check1].type} \nCheck 2 Type: ${tempIconList[check2].type}`);
 
-            if(itemList[(i)].type == tempIconList[check1].type && itemList[(i)].type == tempIconList[check2].type){
+            if(itemList[i].type == tempIconList[check1].type && itemList[(i)].type == tempIconList[check2].type){
               matchType.push(MATCH_TYPE[j]); 
-              indexes.push([(i), check1, check2]);
-              console.log(`Match Found: ${MATCH_TYPE[j]}`);
+              indexes.push(itemList[i].grid, check1, check2);
+              console.log(`Match Found: ${MATCH_TYPE[j]}\n Item #${2-i}, itemList[i].grid: ${itemList[i].grid}, check1: ${check1}, check2: ${check2},`);
             }
           }
         }
@@ -446,84 +487,256 @@ function IconGrid({num}){
     } 
     console.log(`Matches Found: ${matchType.toString()}`);
     console.log(`\nEnd\n`);
-    return {matchType, indexes};
+    return indexes;
   }
 
-  const processMatch = (matchType, indexes) => {
-    const tempIconList = [...iconList];
-    const MATCH_TYPE = [
-      "up",
-      "left",
-      "down",
-      "right",
-      "vertical",
-      "horizontal",
-      "slot"
-    ];
-    const newIndexes = [...indexes];
+  // const processMatch = (indexes, tempBoard) => {
+  //   const gridNumber = num;
+  //   const CHECK_HORIZONTAL = 1;
+  //   const BASIC_MATCH = 3;
+  //   const centerSquare = Math.floor((num * num) / 2);
+  //   const tempIconList = [...tempBoard];
+  //   let newIndexes = [];
 
-    for (let i = 0; i < newIndexes.length; i++){
-      for (let j = 0; j < matchType.length; j++){
-        switch(matchType[j]){
-          case MATCH_TYPE[0]: // Up
-            newIndexes[i] = checkBigMatch(matchType[j], newIndexes[i]);
-            break;
-          case MATCH_TYPE[1]: // Left
-            break;
-          case MATCH_TYPE[2]: // Down
-            break;
-          case MATCH_TYPE[3]: // Right
-            break;
-          case MATCH_TYPE[4]: // Vertical
-            break;
-          case MATCH_TYPE[5]: // Horizontal
-            break;
-          case MATCH_TYPE[6]: // Slot
-            break;
+  //   // If move was between 2 slot icons, stop processing
+  //   if(indexes.length >= BASIC_MATCH){
+
+  //     // Remove duplicate indexes
+  //     for (let i = 0; i < indexes.length; i++){
+  //       console.log(`Matched Indexes: ${indexes[i]}`);
+  //       if(!newIndexes.includes(indexes[i])){
+  //         console.log(`New Index: ${indexes[i]}`);
+  //         newIndexes.push(indexes[i]);
+  //       }
+  //     }
+
+  //     console.log(`New Index Length: ${indexes.length}`);
+
+  //     // Set the matched Icons to null
+  //     newIndexes.forEach(index => {
+  //       console.log(`Changed to null: Index: ${index}\n Prev Type: ${tempIconList[index].type}`);
+  //       tempIconList[index].type = null; 
+  //       console.log(`Changed to null: Index: ${index}\n New Type: ${tempIconList[index].type}`);
+  //     });
+
+  //     // If matching above basic, make moved icon a slot symbol
+  //     if(newIndexes.length > BASIC_MATCH) {
+  //       console.log(`Above Basic: ${newIndexes.length}`);
+  //       const newSlot = genRandIcon(newIndexes[0], "", true);
+  //       tempIconList[newIndexes[0]] = {...newSlot, isNewSlot: true};
+  //       console.log(`New Slot Symbol: ${tempIconList[newIndexes[0]].type}`);
+  //       console.log(`New first Index: ${newIndexes[0]}`);
+  //     }
+
+  //     console.log(`\n#####START#####\n`);
+  //     // Go through each row of the board
+  //     for (let i = 0; i < gridNumber; i++) {
+  //       let nextIndex;
+  //       // Checks through each column and moves icon down if there's null icons
+  //       for (let j = gridNumber - 1; j >= 0; j--) {
+  //         let index = j * gridNumber + i;
+
+  //         // Skip new slot icons
+  //         if (tempIconList[index].isNewSlot) continue;
+          
+  //         if(nextIndex === undefined){
+  //           nextIndex = index;
+  //         }
+
+  //         nextIndex -= gridNumber;
+
+  //         console.log(`Index: ${index}, nextIndex: ${nextIndex}`);
+  //         // Generate new icon if the top has been reached
+  //         if (nextIndex < 0 && tempIconList[index].type == null) {
+  //           console.log(`Top Reached: Before Generation: ${tempIconList[index].type}`);
+  //           const newIcon = genRandIcon(index);
+  //           tempIconList[index] = {...newIcon, isFalling: true};
+
+  //           console.log(`Top Reached: New Icon: ${tempIconList[index].type}`);
+
+  //         } else if(tempIconList[index].type == null) {
+  //           console.log(`Null found, switching Icons`);
+            
+  //           // Switch the null icon with the icon above
+  //           const item1 = tempIconList[index];
+  //           let item2 = tempIconList[nextIndex];
+
+  //           while(item2.type == null && newIndexes.includes(nextIndex) || item2.isNewSlot){
+  //             console.log(`Part of Match: ${nextIndex}`);
+  //             nextIndex -= gridNumber;
+  //             if(nextIndex > 0){
+  //               item2 = tempIconList[nextIndex];
+  //               console.log(`Changed: ${nextIndex}`);
+  //             } else {
+  //               console.log(`Reached the top: ${nextIndex}`);
+  //               break;
+  //             }
+  //           }
+
+  //           if (nextIndex > 0) {
+  //             console.log(`Before change: ${item1.type}, ${item2.type}`);
+
+  //             tempIconList[index] = { ...item2, id: item1.id, grid: item1.grid, isFalling: true };
+  //             tempIconList[nextIndex] = { ...item1, id: item2.id, grid: item2.grid, isFalling: true };
+
+  //             console.log(`After change: ${tempIconList[index].type}, ${tempIconList[nextIndex].type}`);
+  //           }
+  //         }
+  //       }
+  //     }      
+
+  //     setIconList(() => [...tempIconList]);
+
+  //     console.log("####Process List####");
+  //     tempIconList.forEach(icon => {
+  //       console.log(`Icon Type: ${icon.type}\n Index: ${icon.grid}`);
+  //     });
+
+  //     // Resets falling animation
+  //     setTimeout(() => {
+  //       setIconList(currentList => 
+  //         currentList.map(icon => ({ ...icon, isFalling: false, isNewSlot: false }))
+  //       );
+  //     }, 300);
+  //   }
+
+  //   if(checkWin(tempIconList)){
+  //     setGameOver(true);
+  //   }
+  //   console.log(`\n#####END#####\n`);
+  //   return tempIconList;
+    
+  // };
+
+  const processMatch = (indexes, tempBoard) => {
+    const gridNumber = num;
+    const BASIC_MATCH = 3;
+    const tempIconList = [...tempBoard];
+    let newIndexes = [];
+
+    // If move was between 2 slot icons, stop processing
+    if(indexes.length >= BASIC_MATCH){
+
+      // Remove duplicate indexes
+      for (let i = 0; i < indexes.length; i++){
+        if(!newIndexes.includes(indexes[i])){
+          newIndexes.push(indexes[i]);
         }
       }
-    }
-    setIconList(tempIconList);
-  }
 
-  const checkBigMatch = (matchType, indexes) => {
-    const MATCH_TYPE = [
-      "up",
-      "left",
-      "down",
-      "right",
-      "vertical",
-      "horizontal",
-      "slot"
-    ];
-    const newIndexes = [...indexes];
+      // Set the matched Icons to null
+      newIndexes.forEach(index => {
+        tempIconList[index] = { ...tempIconList[index], type: null, src: "/icons/error.png" };
+      });
 
-    switch(matchType[i]){
-        case MATCH_TYPE[0]: // Up
-          checkBigMatch
-          break;
-        case MATCH_TYPE[1]: // Left
-          break;
-        case MATCH_TYPE[2]: // Down
-          break;
-        case MATCH_TYPE[3]: // Right
-          break;
-        case MATCH_TYPE[4]: // Vertical
-          break;
-        case MATCH_TYPE[5]: // Horizontal
-          break;
-        case MATCH_TYPE[6]: // Slot
-          break;
+      // If matching above basic, make moved icon a slot symbol
+      if(newIndexes.length > BASIC_MATCH) {
+        const newSlot = genRandIcon(newIndexes[0], "", true);
+        tempIconList[newIndexes[0]] = {...newSlot, isNewSlot: true};
       }
-  }
 
+      // Go through each row of the board
+      for (let col = 0; col < gridNumber; col++) {
+        let columnIndexes = [];
+        for (let row = 0; row < gridNumber; row++) {
+          columnIndexes.push(row * gridNumber + col);
+        }
+
+        const newSlotRowIndex = columnIndexes.findIndex(index => tempIconList[index].isNewSlot);
+
+        let updatedColumn;
+
+        if (newSlotRowIndex !== -1) {
+          const anchoredSlot = tempIconList[columnIndexes[newSlotRowIndex]];
+
+          // Get icons above the slot
+          const topIcons = columnIndexes
+            .slice(0, newSlotRowIndex)
+            .map(index => tempIconList[index])
+            .filter(icon => icon.type !== null);
+
+          const bottomIcons = columnIndexes
+            .slice(newSlotRowIndex + 1)
+            .map(index => tempIconList[index])
+            .filter(icon => icon.type !== null);
+
+          const topMissingCount = newSlotRowIndex - topIcons.length;
+          let topNewIcons = [];
+          for (let i = 0; i < topMissingCount; i++) {
+              topNewIcons.push({ ...genRandIcon(col), isFalling: true });
+          }
+
+          const bottomMissingCount = (gridNumber - 1 - newSlotRowIndex) - bottomIcons.length;
+          let bottomNewIcons = [];
+          for (let i = 0; i < bottomMissingCount; i++) {
+              bottomNewIcons.push({ ...genRandIcon(col), isFalling: true });
+          }
+
+          updatedColumn = [
+              ...topNewIcons, 
+              ...topIcons, 
+              anchoredSlot, 
+              ...bottomNewIcons, 
+              ...bottomIcons
+          ];
+        } else {
+          // Pull the icon objects from the board for this column
+          let currentColumnIcons = columnIndexes.map(index => tempIconList[index]);
+
+          // Filter out null icons
+          let remainingIcons = currentColumnIcons.filter(icon => icon.type !== null);
+
+          const missingCount = gridNumber - remainingIcons.length;
+
+          let newIcons = [];
+          for (let i = 0; i < missingCount; i++) {
+            const icon = genRandIcon(col); // Pass col as a placeholder index
+            newIcons.push({ ...icon, isFalling: true });
+          }
+
+          updatedColumn = [...newIcons, ...remainingIcons];
+        }
+
+        columnIndexes.forEach((actualGridIndex, i) => {
+          const targetIcon = updatedColumn[i];
+          
+          // Determine if it actually moved or if it's new
+          // If the icon's original grid position isn't where it is now, it's falling
+          const hasMoved = targetIcon.grid !== actualGridIndex;
+
+          tempIconList[actualGridIndex] = {
+            ...targetIcon,
+            id: tempIconList[actualGridIndex].id,
+            grid: actualGridIndex,
+            isFalling: hasMoved || targetIcon.isFalling
+          };
+        });
+      }    
+
+      // Resets falling animation
+      setTimeout(() => {
+        setIconList(currentList => 
+          currentList.map(icon => ({ ...icon, isFalling: false, isNewSlot: false }))
+        );
+      }, 300);
+    }
+
+    if(checkWin(tempIconList)){
+      setGameOver(true);
+    }
+    console.log(`\n#####END#####\n`);
+    return tempIconList;
+    
+  };
+
+  // Checks the whole board after a move is completed for cascading matches
   const checkMatches = () => {
 
   }
 
-  const checkWin = () => {
+  const checkWin = (tempBoard) => {
     const centerSquare = Math.floor((num * num) / 2);
-    if(iconList[centerSquare - 1].type == iconList[centerSquare].type && iconList[centerSquare].type == iconList[centerSquare + 1].type){
+    if(tempBoard[centerSquare - 1].type == tempBoard[centerSquare].type && tempBoard[centerSquare].type == tempBoard[centerSquare + 1].type){
       return true;
     }
     return false;
@@ -548,7 +761,12 @@ function IconGrid({num}){
             onDragEnd={dragEndHandler}
             onDrop={dropHandler}
             onDragOver={dragoverHandler}
-            className={`icon ${icon.isSlot ? 'isSlot' : ''}`}
+            className={`
+              icon 
+              ${icon.isSlot ? 'isSlot' : ''} 
+              ${icon.isFalling ? 'iconFalling' : ''} 
+              ${icon.isNewSlot ? 'iconPopForward' : ''}
+            `}
           />
         </div>
       );
