@@ -2,7 +2,7 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #1a1a1a;
 }
 
 @theme inline {
@@ -14,7 +14,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #1a202c;
     --foreground: #ededed;
   }
 }
@@ -31,3 +31,18 @@ body {
   padding: 10px;
   border: 1px solid #aaaaaa;
 }
+
+@layer base {
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 100% !important;
+    width: 100% !important;
+    overflow: hidden !important;
+    /* Prevents "Rubber-banding" or elastic scrolling on iOS/macOS */
+    position: fixed;
+    touch-action: none; 
+    background: radial-gradient(circle, #ffffff 0%, #f0f0f0 100%) !important;
+  }
+}
+

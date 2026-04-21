@@ -6,12 +6,17 @@ import './iconGrid.css';
   Takes provided icons and returns them in grid formation
 */
 function IconGrid({num}){
-  // Initialize Icons
+  const MIN_TIME = 60;
+  const MAX_TIME = 120;
+  const getRandomTime = (min, max) => {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  };
   const [iconList, setIconList] = useState([]);
   const [gameOver, setGameOver] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
-
+  const [timeLeft, setTimeLeft] = useState(() => getRandomTime(MIN_TIME, MAX_TIME));
   const dragItem = useRef(null);
+  
 
   useEffect(() => {
     setHasMounted(true);
@@ -59,6 +64,54 @@ function IconGrid({num}){
 
     genIconList(genSlots());
   }, []);
+
+  useEffect(() => {
+    const isAnimating = iconList.some(icon => icon.isFalling);
+    if (isAnimating || iconList.length === 0 || gameOver) return;
+
+    const matchedIndexes = checkMatches(iconList);
+
+    if (matchedIndexes.length > 0) {
+      const timer = setTimeout(() => {
+        setIconList(currentBoard => {
+          const freshMatches = checkMatches(currentBoard);
+          if (freshMatches.length === 0) return currentBoard;
+          
+          return processMatch(freshMatches, currentBoard);
+        });
+      }, 300);
+
+      return () => clearTimeout(timer);
+    } else {
+      if (checkWin(iconList)) {
+        setGameOver(true);
+      } else if (!hasPossibleMoves(iconList)){
+        alert("No more moves! Reshuffling..."); // Replace with a pretty modal later
+        setIconList(currentBoard => reshuffleBoard(currentBoard));
+      }
+    }
+  }, [iconList, hasMounted, gameOver]);
+
+  useEffect(() => {
+    // Stop the timer if game is over or paused
+    if (gameOver || timeLeft <= 0) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setGameOver(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // Cleanup: this clears the timer if the component re-renders or unmounts
+    return () => clearInterval(timer);
+  }, [timeLeft, gameOver]);
+
+  
 
   function genSlots(){
     const ICON_CHANCE = 100;
@@ -357,37 +410,29 @@ function IconGrid({num}){
 
     const draggedId = ev.dataTransfer.getData("text");
     const targetId = ev.target.id;
-
     if (draggedId === targetId) return;
 
-    setIconList((currentList) => {
-      const tempBoard = [...currentList];
+    const tempBoard = [...iconList];
+    const index1 = tempBoard.findIndex(icon => icon.id === draggedId);
+    const index2 = tempBoard.findIndex(icon => icon.id === targetId);
 
-      const index1 = tempBoard.findIndex(icon => icon.id === draggedId);
-      const index2 = tempBoard.findIndex(icon => icon.id === targetId);
+    const item1 = tempBoard[index1];
+    const item2 = tempBoard[index2];
 
-      const item1 = tempBoard[index1];
-      const item2 = tempBoard[index2];
+    // Ensures move is allowed
+    if (!isAdjacent(item1.grid, item2.grid)) return;
 
-      // Ensures move is allowed
-      if (!isAdjacent(item1.grid, item2.grid)) return currentList;
+    tempBoard[index1] = { ...item2, id: item1.id, grid: item1.grid };
+    tempBoard[index2] = { ...item1, id: item2.id, grid: item2.grid };
 
-      tempBoard[index1] = { ...item2, id: item1.id, grid: item1.grid };
-      tempBoard[index2] = { ...item1, id: item2.id, grid: item2.grid };
+    const indexes = isValidMove(tempBoard, item1, item2);
 
-      const indexes = isValidMove(tempBoard, item1, item2);
-
-      if (indexes.length > 0){
-        const finalBoard = processMatch(indexes, tempBoard);
-        console.log("Final Board");
-        finalBoard.forEach(icon => {
-          console.log(`Icon Type: ${icon.type}\n Index: ${icon.grid}`);
-        });
-        return finalBoard;
-      }
-      
-      return currentList;
-    });
+    if (indexes.length > 0){
+      const finalBoard = processMatch(indexes, tempBoard);
+      setIconList(finalBoard);
+    } else {
+      return ([...tempBoard]);
+    }
     
     if (dragItem.current) dragItem.current.style.opacity = '1';
   }; 
@@ -411,7 +456,6 @@ function IconGrid({num}){
   };
 
   const isValidMove = (tempIconList, item1, item2) => {
-    console.log(`\nStart\n`);
     const checkVertical = num;
     const CHECK_HORIZONTAL = 1;
     const centerSquare = Math.floor((num * num) / 2);
@@ -452,12 +496,9 @@ function IconGrid({num}){
 
     } else if(!isCenterSquare) {
       for(let i = 0; i < (itemList.length); i++){
-        console.log(`i = ${i}`);
         for(let j = 0; j < checkList.length; j++){
-          console.log(`j = ${j}`);
           const indexX = itemList[i].grid % num;
           const indexY = Math.floor(itemList[i].grid / num);
-          console.log(`Index: (${indexX}, ${indexY})`);
           // Check Up, Left, Down, Right, Vertical, Horizontal
           const requireCheck = [
             (indexY > MIN_COORD),
@@ -470,29 +511,24 @@ function IconGrid({num}){
           const check1 = itemList[i].grid - checkList[j][0];
           const check2 = itemList[i].grid - checkList[j][1];
 
-          console.log(`Required Check: ${MATCH_TYPE[j]}, ${requireCheck[j]}`);
-          console.log(`Check 1: ${check1}\nCheck 2: ${check2}`);
-          console.log(`itemList: ${itemList[(i)].type}`);
           if(requireCheck[j]){
-            console.log(`\nMoved Item Type: ${itemList[i].type}\nCheck 1 Type: ${tempIconList[check1].type} \nCheck 2 Type: ${tempIconList[check2].type}`);
 
             if(itemList[i].type == tempIconList[check1].type && itemList[(i)].type == tempIconList[check2].type && !itemList[i].isSlot){
               matchType.push(MATCH_TYPE[j]); 
               indexes.push(itemList[i].grid, check1, check2);
-              console.log(`Match Found: ${MATCH_TYPE[j]}\n Item #${2-i}, itemList[i].grid: ${itemList[i].grid}, check1: ${check1}, check2: ${check2},`);
             }
           }
         }
       }
     } 
-    console.log(`Matches Found: ${matchType.toString()}`);
-    console.log(`\nEnd\n`);
     return indexes;
   }
 
   const processMatch = (indexes, tempBoard) => {
     const gridNumber = num;
     const BASIC_MATCH = 3;
+    const centerRow = Math.floor(num / 2);
+    const centerColumn = [centerRow - 1, centerRow, centerRow + 1];
     let tempIconList = [...tempBoard];
     let newIndexes = [];
 
@@ -525,10 +561,65 @@ function IconGrid({num}){
         }
 
         const newSlotRowIndex = columnIndexes.findIndex(index => tempIconList[index].isNewSlot);
+        const isCenter = centerColumn.includes(col);
 
-        let updatedColumn;
+        let updatedColumn = new Array(gridNumber);
 
-        if (newSlotRowIndex !== -1) {
+        if(isCenter && newSlotRowIndex == -1){
+          const centerIcon = tempIconList[columnIndexes[centerRow]];
+          let movableIcons = columnIndexes
+            .filter((_, rowIndex) => rowIndex !== centerRow)
+            .map(index => tempIconList[index])
+            .filter(icon => icon.type !== null);
+
+          const missingCount = (gridNumber - 1) - movableIcons.length;
+          let newIcons = [];
+          for (let i = 0; i < missingCount; i++) {
+              newIcons.push({ ...genRandIcon(col), isFalling: true });
+          }
+
+          const combinedMovable = [...newIcons, ...movableIcons];
+          
+          let movablePointer = 0;
+          for (let i = 0; i < gridNumber; i++) {
+            if (i === centerRow) {
+                updatedColumn[i] = centerIcon;
+            } else {
+                updatedColumn[i] = combinedMovable[movablePointer++];
+            }
+          }
+        } else if(isCenter && newSlotRowIndex !== -1){
+          let anchors = [];
+          anchors.push({ row: centerRow, icon: tempIconList[columnIndexes[centerRow]] });
+          anchors.push({ row: newSlotRowIndex, icon: tempIconList[columnIndexes[newSlotRowIndex]] });
+
+          anchors.sort((a, b) => a.row - b.row);
+
+          const anchorRows = anchors.map(a => a.row);
+          let movableIcons = columnIndexes
+              .filter((_, rowIndex) => !anchorRows.includes(rowIndex))
+              .map(index => tempIconList[index])
+              .filter(icon => icon.type !== null);
+
+          const missingCount = gridNumber - anchors.length - movableIcons.length;
+          let newIcons = [];
+          for (let i = 0; i < missingCount; i++) {
+            newIcons.push({ ...genRandIcon(col), isFalling: true });
+          }
+
+          const allFallingIcons = [...newIcons, ...movableIcons];
+
+          let fallingPointer = 0;
+          for (let i = 0; i < gridNumber; i++) {
+              const anchorMatch = anchors.find(a => a.row === i);
+              if (anchorMatch) {
+                  updatedColumn[i] = anchorMatch.icon;
+              } else {
+                  updatedColumn[i] = allFallingIcons[fallingPointer++];
+              }
+          }
+
+        } else if (newSlotRowIndex !== -1) {
           const anchoredSlot = tempIconList[columnIndexes[newSlotRowIndex]];
 
           // Get icons above the slot
@@ -606,19 +697,6 @@ function IconGrid({num}){
     if(checkWin(tempIconList)){
       setGameOver(true);
     }
-    
-    let hasMatch = true;
-
-    while(hasMatch){
-      hasMatch = false;
-      const matchedIndexes = checkMatches(tempIconList);
-      
-      if(matchedIndexes.length > 0){
-        hasMatch = true;
-        const newBoard = processMatch(matchedIndexes, tempIconList);
-        tempIconList = [...newBoard];
-      }
-    }
 
     return tempIconList;
   };
@@ -634,7 +712,7 @@ function IconGrid({num}){
       const current = tempIconList[i];
 
       // Skip nulls or empty types
-      if (!current.type) continue;
+      if (!current.type || current.isSlot) continue;
 
       // --- CHECK HORIZONTAL (Right) ---
       // Only check if we have at least 2 tiles remaining to the right
@@ -666,6 +744,72 @@ function IconGrid({num}){
     return Array.from(indexes);
   }
 
+  const hasPossibleMoves = (tempBoard) => {
+    const size = num;
+    const centerRow= Math.floor(size / 2);
+    const centerStartIndex = centerRow * size + (centerRow - 1);
+    const centerColumnIndexes = [centerStartIndex, centerStartIndex + 1, centerStartIndex + 2];
+
+    for (let i = 0; i < tempBoard.length; i++) {
+      if (centerColumnIndexes.includes(i)) continue;
+
+      const x = i % size;
+      const y = Math.floor(i / size);
+
+      const neighbors = [];
+      if (x < size - 1) neighbors.push(i + 1); // Right
+      if (y < size - 1) neighbors.push(i + size); // Down
+
+      for (let neighborIndex of neighbors) {
+        if (centerColumnIndexes.includes(neighborIndex)) continue;
+        
+        const virtualBoard = [...tempBoard];
+        const item1 = virtualBoard[i];
+        const item2 = virtualBoard[neighborIndex];
+
+        if (item1.isSlot && item2.isSlot) continue;
+
+        virtualBoard[i] = { ...item2, grid: i };
+        virtualBoard[neighborIndex] = { ...item1, grid: neighborIndex };
+
+        if (checkMatches(virtualBoard).length > 0) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  const reshuffleBoard = (currentBoard) => {
+    let movableIcons = currentBoard.filter(icon => !icon.isSlot);
+
+    let isBoardValid = false;
+    let reshuffledFullBoard = [];
+
+    while (!isBoardValid) {
+      for (let i = movableIcons.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [movableIcons[i], movableIcons[j]] = [movableIcons[j], movableIcons[i]];
+      }
+
+      let movablePointer = 0;
+      reshuffledFullBoard = currentBoard.map((originalSlot) => {
+        if (originalSlot.isSlot) {
+          return originalSlot;
+        }
+        const newIcon = movableIcons[movablePointer++];
+        return { ...newIcon, grid: originalSlot.grid, id: originalSlot.id };
+      });
+
+      const immediateMatches = checkMatches(reshuffledFullBoard);
+      if (immediateMatches.length === 0 && hasPossibleMoves(reshuffledFullBoard)) {
+        isBoardValid = true;
+      }
+    }
+
+    return reshuffledFullBoard;
+  };
+
   const checkWin = (tempBoard) => {
     const centerSquare = Math.floor((num * num) / 2);
     if(tempBoard[centerSquare - 1].type == tempBoard[centerSquare].type && tempBoard[centerSquare].type == tempBoard[centerSquare + 1].type){
@@ -675,44 +819,68 @@ function IconGrid({num}){
   }
 
   return (
-    <div className='container' style={{ position: 'relative'}}>
-      {iconList.map((icon) => {
-        const centerSquare = Math.floor((num * num) / 2);
-        const isCenterSquare = (icon.grid == (centerSquare - 1)) || (icon.grid == centerSquare) || (icon.grid == (centerSquare + 1));
-
-      return (
-        <div key={icon.id} className={`tile ${isCenterSquare ? 'centerZone' : ''}`}>
-          <img
-            id={icon.id}
-            src={icon.src}
-            grid={icon.grid}
-            type={icon.type}
-            isslot={(icon.isSlot).toString()}
-            draggable="true"
-            onDragStart={dragstartHandler}
-            onDragEnd={dragEndHandler}
-            onDrop={dropHandler}
-            onDragOver={dragoverHandler}
-            className={`
-              icon 
-              ${icon.isSlot ? 'isSlot' : ''} 
-              ${icon.isFalling ? 'iconFalling' : ''} 
-              ${icon.isNewSlot ? 'iconPopForward' : ''}
-            `}
-          />
+    <div className="game-wrapper">
+      <div className="ui-header">
+        <div className={`timer-box ${timeLeft < 10 ? 'critical' : ''}`}>
+          <span className="label">TIME</span>
+          <span className="value">{timeLeft}s</span>
         </div>
-      );
-    })}
+      </div>
+      <div 
+        className='container' 
+        style={{ 
+          display: 'grid',
+          gridTemplateColumns: `repeat(${num}, var(--tile-size))`,
+          gridTemplateRows: `repeat(${num}, var(--tile-size))` 
+        }}
+      >
+        {iconList.map((icon) => {
+          const centerSquare = Math.floor((num * num) / 2);
+          const isCenterSquare = (icon.grid == (centerSquare - 1)) || (icon.grid == centerSquare) || (icon.grid == (centerSquare + 1));
 
-      {gameOver && (
-        <div className="overlay">
-          <div className="modal">
-            <h1>JACKPOT!</h1>
-            <p>You matched the center slots!</p>
-            <button onClick={() => window.location.reload()}>Play Again</button>
+          return (
+            <div key={icon.id} className={`tile ${isCenterSquare ? 'centerZone' : ''}`}>
+              <img
+                id={icon.id}
+                src={icon.src}
+                grid={icon.grid}
+                type={icon.type}
+                isslot={(icon.isSlot).toString()}
+                draggable="true"
+                onDragStart={dragstartHandler}
+                onDragEnd={dragEndHandler}
+                onDrop={dropHandler}
+                onDragOver={dragoverHandler}
+                className={`
+                  icon 
+                  ${icon.isSlot ? 'isSlot' : ''} 
+                  ${icon.isFalling ? 'iconFalling' : ''} 
+                  ${icon.isNewSlot ? 'iconPopForward' : ''}
+                `}
+              />
+            </div>
+          );
+        })}
+
+          {gameOver && (
+          <div className="overlay">
+            <div className="modal">
+              {timeLeft > 0 ? (
+                <>
+                  <h1 className="win-text">JACKPOT!</h1>
+                  <p>You matched the center slots!</p>
+                </>
+              ) : (
+                <>
+                  <h1 className="loss-text">TIME UP!</h1>
+                  <p>Better luck next time.</p>
+                </>
+              )}
+              <button className="retry-btn" onClick={() => window.location.reload()}>Play Again</button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

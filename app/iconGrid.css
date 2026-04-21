@@ -1,31 +1,42 @@
+
+:root {
+  --tile-size: 65px; 
+}
+
 .container {
   display: grid;
-  grid-template-columns: repeat(9, 57px);
-  gap: 10px;
-  padding: 10px;
+  /* This tells the grid: "Fit as many columns as possible that are at least 65px wide" */
+  grid-template-columns: repeat(auto-fill, var(--tile-size)); 
+  gap: 8px; 
+  padding: 15px;
+  
   background-color: #1a1a1a;
   border-radius: 12px;
-  user-select: none;
+  
+  /* Critical: ensure the container can grow */
+  width: 100%; 
+  max-width: fit-content; 
+  height: auto;
+  
   margin: 0 auto;
-  width: max-content;
 }
 
 .tile {
-  width: 57px;
-  height: 57px;
-  background-image: url("/icons/Tile_Background.png"); /* For Later*/
-  background-size: contain;
+  width: var(--tile-size);
+  height: var(--tile-size);
   display: flex;
   align-items: center;
   justify-content: center;
+  /* background-image: url("/icons/Tile_Background.png"); */
+  background-size: contain;
 }
 
 .icon {
-  width: 57px;
-  height: 57px;
+  width: 100%;  /* Fill the .tile */
+  height: 100%; /* Fill the .tile */
+  object-fit: contain; /* Ensures the icon doesn't stretch or bleed out */
   cursor: grab;
   transition: transform 0.1s ease, opacity 0.2s;
-  -webkit-user-drag: element;
 }
 
 .icon:hover {
@@ -146,4 +157,66 @@
     /* Back to natural size */
     transform: scale(1); 
   }
+}
+
+.game-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start; 
+  height: 100vh;
+  width: 100vw;
+  box-sizing: border-box;
+  overflow: hidden;
+  gap: 5px; /* Tiny gap between header and board */
+}
+
+@media (max-height: 800px) {
+  .container {
+    /* Scale down only when the screen gets too short for the new 65px tiles */
+    transform: scale(0.85);
+    transform-origin: top center;
+  }
+  .game-wrapper {
+    padding-top: 2vh;
+  }
+}
+
+.ui-header {
+  padding-top: 20px; /* Adjust this value to your liking */
+  display: flex;
+  justify-content: center; /* Keeps the timer centered horizontally */
+  width: 100%;
+}
+
+/* Slimmer, more compact timer */
+.timer-box {
+  background: rgba(51, 51, 51, 0.9);
+  color: white;
+  padding: 4px 15px;
+  border-radius: 20px; /* Rounded pill shape looks smaller */
+  border: 1px solid #555;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: unset; /* Let it shrink to content */
+}
+
+.timer-box .label {
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+.timer-box .value {
+  font-size: 18px; /* Smaller font */
+  font-family: monospace;
+}
+
+.win-text { color: #ffd700; }
+.loss-text { color: #ff4d4d; }
+
+@keyframes pulse {
+  0% { transform: scale(1); box-shadow: 0 0 0px rgba(255, 77, 77, 0); }
+  50% { transform: scale(1.05); box-shadow: 0 0 10px rgba(255, 77, 77, 0.5); }
+  100% { transform: scale(1); box-shadow: 0 0 0px rgba(255, 77, 77, 0); }
 }
