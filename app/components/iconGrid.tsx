@@ -1,31 +1,52 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import './iconGrid.css';
+import '../../styles/iconGrid.css';
+
+declare module 'react' {
+  interface HTMLAttributes<T> {
+    grid?: number;
+    type?: string | null;
+    isslot?: string;
+  }
+}
+
+interface Icon {
+  id: string;
+  grid: number;
+  src: string;
+  type: string | null;
+  isSlot: boolean;
+  isFalling: boolean;
+  isNewSlot: boolean;
+}
+
+interface IconGridProps {
+  num: number;
+}
 
 /* 
   Takes provided icons and returns them in grid formation
 */
-function IconGrid({num}){
+function IconGrid({num}: IconGridProps){
   const MIN_TIME = 60;
   const MAX_TIME = 120;
-  const getRandomTime = (min, max) => {
+  const getRandomTime = (min: number, max: number) => {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   };
-  const [iconList, setIconList] = useState([]);
-  const [gameOver, setGameOver] = useState(false);
-  const [hasMounted, setHasMounted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(() => getRandomTime(MIN_TIME, MAX_TIME));
-  const dragItem = useRef(null);
+  const [iconList, setIconList] = useState<Icon[]>([]);
+  const [gameOver, setGameOver] = useState<boolean>(false);
+  const [hasMounted, setHasMounted] = useState<boolean>(false);
+  const [timeLeft, setTimeLeft] = useState<number>(() => getRandomTime(MIN_TIME, MAX_TIME));
+  const dragItem = useRef<HTMLImageElement | null>(null);
   
-
   useEffect(() => {
     setHasMounted(true);
 
-    function genIconList(slotList){
+    function genIconList(slotList: Icon[]){
       const NUM_OF_SLOTS = 3;
-      const tempIconList = []
+      const tempIconList = [] as Icon[];
       let hasMatch = true;
-      let icon;
+      let icon = {} as Icon;
 
       if(!Number.isInteger(num)){
         console.log(`Not Int`);
@@ -74,7 +95,7 @@ function IconGrid({num}){
     if (matchedIndexes.length > 0) {
       const timer = setTimeout(() => {
         setIconList(currentBoard => {
-          const freshMatches = checkMatches(currentBoard);
+          const freshMatches = checkMatches(currentBoard) as number[];
           if (freshMatches.length === 0) return currentBoard;
           
           return processMatch(freshMatches, currentBoard);
@@ -110,8 +131,6 @@ function IconGrid({num}){
     // Cleanup: this clears the timer if the component re-renders or unmounts
     return () => clearInterval(timer);
   }, [timeLeft, gameOver]);
-
-  
 
   function genSlots(){
     const ICON_CHANCE = 100;
@@ -190,9 +209,9 @@ function IconGrid({num}){
     return slotList;
   }
 
-  function genRandIcon(index, excludeType = "", genSlotIcon = false){
+  function genRandIcon(index: number, excludeType: string = "", genSlotIcon: boolean = false): Icon {
     const ICON_CHANCE = 100;
-    let icon = {
+    let icon: Icon = {
       id: "",
       grid: -1,
       src: "",
@@ -354,7 +373,7 @@ function IconGrid({num}){
     return icon;
   }
 
-  function checkInitialMatches (currentIndex, type, boardToCheck){
+  function checkInitialMatches (currentIndex: number, type: string | null, boardToCheck: Icon[]){
     const checkVertical = num;
     const CHECK_HORIZONTAL = 1;
     const MIN_COORD = 1;
@@ -384,32 +403,31 @@ function IconGrid({num}){
 
   if (!hasMounted) return null;
 
-  const dragstartHandler = (ev) => {
+  const dragstartHandler = (ev: React.DragEvent<HTMLImageElement>) => {
     if (gameOver) return;
 
-    dragItem.current = ev.target;
-    ev.dataTransfer.setData("text", ev.target.id);
+    dragItem.current = ev.currentTarget;
+    ev.currentTarget.classList.add('dragging');
+    ev.dataTransfer.setData("text", ev.currentTarget.id);
     ev.dataTransfer.effectAllowed = "move";
-
-    setTimeout(() => {
-      ev.target.style.opacity = '0';
-    }, 0);
   };
 
-  const dragEndHandler = (ev) => {
-    ev.target.style.opacity = '1';
+  const dragEndHandler = (ev: React.DragEvent<HTMLImageElement>) => {
+    ev.currentTarget.classList.remove('dragging');
+    dragItem.current = null;
   };
 
-  const dragoverHandler = (ev) => {
+  const dragoverHandler = (ev: React.DragEvent<HTMLImageElement>) => {
     ev.preventDefault();
   };
 
-  const dropHandler = (ev) => {
+  const dropHandler = (ev: React.DragEvent<HTMLImageElement>) => {
     if(gameOver) return;
     ev.preventDefault();
 
     const draggedId = ev.dataTransfer.getData("text");
-    const targetId = ev.target.id;
+    const targetId = ev.currentTarget.id;
+
     if (draggedId === targetId) return;
 
     const tempBoard = [...iconList];
@@ -433,11 +451,9 @@ function IconGrid({num}){
     } else {
       return ([...tempBoard]);
     }
-    
-    if (dragItem.current) dragItem.current.style.opacity = '1';
   }; 
 
-  const isAdjacent = (grid1, grid2) => {
+  const isAdjacent = (grid1: number, grid2: number) => {
     const checkVertical = num;
     const CHECK_HORIZONTAL = 1;
     const checkList = [
@@ -455,7 +471,7 @@ function IconGrid({num}){
     return false; 
   };
 
-  const isValidMove = (tempIconList, item1, item2) => {
+  const isValidMove = (tempIconList: Icon[], item1: Icon, item2: Icon) => {
     const checkVertical = num;
     const CHECK_HORIZONTAL = 1;
     const centerSquare = Math.floor((num * num) / 2);
@@ -524,13 +540,13 @@ function IconGrid({num}){
     return indexes;
   }
 
-  const processMatch = (indexes, tempBoard) => {
+  const processMatch = (indexes: number[], tempBoard: Icon[]) => {
     const gridNumber = num;
     const BASIC_MATCH = 3;
     const centerRow = Math.floor(num / 2);
     const centerColumn = [centerRow - 1, centerRow, centerRow + 1];
     let tempIconList = [...tempBoard];
-    let newIndexes = [];
+    let newIndexes: number[] = [];
 
     // If move was between 2 slot icons, stop processing
     if(indexes.length >= BASIC_MATCH){
@@ -702,7 +718,7 @@ function IconGrid({num}){
   };
 
   // Checks the whole board after a move is completed for cascading matches
-  function checkMatches(tempIconList) {
+  function checkMatches(tempIconList: Icon[]){
     const indexes = new Set();
     const size = num;
 
@@ -744,7 +760,7 @@ function IconGrid({num}){
     return Array.from(indexes);
   }
 
-  const hasPossibleMoves = (tempBoard) => {
+  const hasPossibleMoves = (tempBoard: Icon[]) => {
     const size = num;
     const centerRow= Math.floor(size / 2);
     const centerStartIndex = centerRow * size + (centerRow - 1);
@@ -780,11 +796,11 @@ function IconGrid({num}){
     return false;
   };
 
-  const reshuffleBoard = (currentBoard) => {
+  const reshuffleBoard = (currentBoard: Icon[]) => {
     let movableIcons = currentBoard.filter(icon => !icon.isSlot);
 
     let isBoardValid = false;
-    let reshuffledFullBoard = [];
+    let reshuffledFullBoard: Icon[] = [];
 
     while (!isBoardValid) {
       for (let i = movableIcons.length - 1; i > 0; i--) {
@@ -810,7 +826,7 @@ function IconGrid({num}){
     return reshuffledFullBoard;
   };
 
-  const checkWin = (tempBoard) => {
+  const checkWin = (tempBoard: Icon[]) => {
     const centerSquare = Math.floor((num * num) / 2);
     if(tempBoard[centerSquare - 1].type == tempBoard[centerSquare].type && tempBoard[centerSquare].type == tempBoard[centerSquare + 1].type){
       return true;

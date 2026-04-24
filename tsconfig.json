@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "app/iconGrid.jsx"  ],
+, "app/components/iconGrid.tsx"  ],
   "exclude": ["node_modules"]
 }

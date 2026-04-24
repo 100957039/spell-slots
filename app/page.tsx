@@ -1,5 +1,5 @@
-import IconGrid from "./iconGrid.jsx";
-import './globals.css';
+import IconGrid from "./components/iconGrid";
+import '../styles/globals.css';
 
 export default function Home() {
   return (
