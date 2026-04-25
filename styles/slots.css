@@ -1,0 +1,162 @@
+/* The "Big Round Button" */
+.spin-button {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffd700, #b8860b);
+  border: 8px solid #5d4a00;
+  color: #000;
+  font-size: 2.5rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 0 40px rgba(255, 215, 0, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.5);
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spin-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 60px rgba(255, 215, 0, 0.6);
+}
+
+.spin-button:active {
+  transform: scale(0.9);
+}
+
+/* Horizontal Row for Reels */
+.slot-reel-frame {
+  display: flex;
+  flex-direction: row; /* Forces Horizontal */
+  gap: 15px;
+  background: #111;
+  padding: 20px;
+  border: 4px solid #ffd700;
+  border-radius: 20px;
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+}
+
+.reel {
+  width: 100px;
+  height: 100px;
+  background: #0a0a0a; /* Slightly lighter than pure black */
+  /* This gold border ensures dark icons like the Spade are visible */
+  border: 2px solid rgba(255, 215, 0, 0.4); 
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  
+  /* PERFECT CENTERING */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Subtle inner glow to separate the icon from the edge */
+  box-shadow: inset 0 0 15px rgba(255, 215, 0, 0.1);
+}
+/* Spinning Animation */
+.blur-strip {
+  display: flex;
+  flex-direction: column;
+  animation: reelSpinScroll 0.1s linear infinite;
+}
+
+.blur-icon {
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(to bottom, #ffd70033, #ffd700aa, #ffd70033);
+  filter: blur(10px);
+}
+
+@keyframes reelSpinScroll {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-100px); }
+}
+
+.slot-display-icon {
+  width: 80px;
+  height: 80px;
+  padding: 10px;
+}
+
+.is-landed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+.slot-display-icon {
+  width: 75px;  /* Slightly smaller to give 'breathing room' */
+  height: 75px;
+  object-fit: contain;
+  
+  /* THE FIX: Add a subtle white/gold drop shadow directly to the icon 
+     so dark colors don't bleed into the background */
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.2));
+}
+
+/* Optional: Add a 'shimmer' effect to the reel while landed */
+.reel:has(.is-landed) {
+  border-color: rgba(255, 215, 0, 0.8);
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.2), inset 0 0 10px rgba(255, 215, 0, 0.1);
+}
+
+/* The Header Text Container */
+.ready-text-container {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.ready-text {
+  font-size: 3rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  
+  /* Create a Silver-to-Gold Shimmer */
+  background: linear-gradient(
+    to right, 
+    #bf953f, 
+    #fcf6ba, 
+    #b38728, 
+    #fcf6ba, 
+    #bf953f
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  
+  /* Glow and Floating Animation */
+  filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.3));
+  animation: shimmer 3s linear infinite, float 4s ease-in-out infinite;
+}
+
+/* Smooth left-to-right color sweep */
+@keyframes shimmer {
+  to { background-position: 200% center; }
+}
+
+/* Gentle up-and-down hovering */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* A secondary sub-text to fill the space */
+.ready-subtext {
+  color: rgba(255, 215, 0, 0.6);
+  font-family: monospace;
+  font-size: 1rem;
+  letter-spacing: 6px;
+  margin-top: -5px;
+}

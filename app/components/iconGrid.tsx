@@ -22,12 +22,14 @@ interface Icon {
 
 interface IconGridProps {
   num: number;
+  returnToMenu: () => void;
+  centerSlots: Icon[];
 }
 
 /* 
   Takes provided icons and returns them in grid formation
 */
-function IconGrid({num}: IconGridProps){
+export default function IconGrid({num, returnToMenu, centerSlots}: IconGridProps){
   const MIN_TIME = 60;
   const MAX_TIME = 120;
   const getRandomTime = (min: number, max: number) => {
@@ -37,8 +39,19 @@ function IconGrid({num}: IconGridProps){
   const [gameOver, setGameOver] = useState<boolean>(false);
   const [hasMounted, setHasMounted] = useState<boolean>(false);
   const [timeLeft, setTimeLeft] = useState<number>(() => getRandomTime(MIN_TIME, MAX_TIME));
+  const [isCountingDown, setIsCountingDown] = useState<boolean>(true);
+  const [countdown, setCountdown] = useState<number>(3);
   const dragItem = useRef<HTMLImageElement | null>(null);
   
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else {
+      setIsCountingDown(false);
+    }
+  }, [countdown]);
+
   useEffect(() => {
     setHasMounted(true);
 
@@ -83,7 +96,7 @@ function IconGrid({num}: IconGridProps){
       setIconList(tempIconList);
     }
 
-    genIconList(genSlots());
+    genIconList(centerSlots);
   }, []);
 
   useEffect(() => {
@@ -114,8 +127,8 @@ function IconGrid({num}: IconGridProps){
   }, [iconList, hasMounted, gameOver]);
 
   useEffect(() => {
-    // Stop the timer if game is over or paused
-    if (gameOver || timeLeft <= 0) return;
+    // Stop the timer if game is over
+    if (gameOver || timeLeft <= 0 || isCountingDown) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -128,86 +141,8 @@ function IconGrid({num}: IconGridProps){
       });
     }, 1000);
 
-    // Cleanup: this clears the timer if the component re-renders or unmounts
     return () => clearInterval(timer);
-  }, [timeLeft, gameOver]);
-
-  function genSlots(){
-    const ICON_CHANCE = 100;
-    const NUM_OF_SLOTS = 3;
-    let slotList = [];
-
-    for(let i=0; i < NUM_OF_SLOTS; i++){
-      // Slot symbol
-      const slotType = Math.floor(Math.random() * ICON_CHANCE);
-
-      if(slotType < 25){
-        // Heart
-        slotList.push({
-          id: "",
-          grid: 0,
-          src: "/icons/Heart_Icon.png",
-          type: "heart",
-          isSlot: true,
-          isFalling: false,
-          isNewSlot: false
-        })
-      
-      } else if(slotType < 50){
-        // Diamond
-        slotList.push({
-          id: "",
-          grid: 0,
-          src: "/icons/Diamond_Icon.png",
-          type: "diamond",
-          isSlot: true,
-          isFalling: false,
-          isNewSlot: false
-        })
-
-      } else if(slotType < 75){
-        // Spade
-        slotList.push({
-          id: "",
-          grid: 0,
-          src: "/icons/Spade_Icon.png",
-          type: "spade",
-          isSlot: true,
-          isFalling: false,
-          isNewSlot: false
-        })
-
-      } else if(slotType < 95){
-        // Clover
-        slotList.push({
-          id: "",
-          grid: 0,
-          src: "/icons/Clover_Icon.png",
-          type: "clover",
-          isSlot: true,
-          isFalling: false,
-          isNewSlot: false
-        })
-
-      } else {
-        // 7
-        slotList.push({
-          id: "",
-          grid: 0,
-          src: "/icons/7_Icon.png",
-          type: "7",
-          isSlot: true,
-          isFalling: false,
-          isNewSlot: false
-        })
-      }
-    }
-    // Ensures the slots can't start as all the same
-    if(slotList[0].type == slotList[1].type && slotList[0].type == slotList[2].type){
-      slotList[2] = genRandIcon(slotList[2].grid, slotList[2].type, true);
-    }
-    return slotList;
-  }
+  }, [timeLeft, gameOver, isCountingDown]);
 
   function genRandIcon(index: number, excludeType: string = "", genSlotIcon: boolean = false): Icon {
     const ICON_CHANCE = 100;
@@ -837,6 +772,9 @@ function IconGrid({num}: IconGridProps){
   return (
     <div className="game-wrapper">
       <div className="ui-header">
+        <button className="back-to-menu-btn" onClick={returnToMenu}>
+            <span>☰</span> Menu
+          </button>
         <div className={`timer-box ${timeLeft < 10 ? 'critical' : ''}`}>
           <span className="label">TIME</span>
           <span className="value">{timeLeft}s</span>
@@ -854,29 +792,38 @@ function IconGrid({num}: IconGridProps){
           const centerSquare = Math.floor((num * num) / 2);
           const isCenterSquare = (icon.grid == (centerSquare - 1)) || (icon.grid == centerSquare) || (icon.grid == (centerSquare + 1));
 
+          const shouldShow = !isCountingDown || isCenterSquare;
+
           return (
             <div key={icon.id} className={`tile ${isCenterSquare ? 'centerZone' : ''}`}>
-              <img
-                id={icon.id}
-                src={icon.src}
-                grid={icon.grid}
-                type={icon.type}
-                isslot={(icon.isSlot).toString()}
-                draggable="true"
-                onDragStart={dragstartHandler}
-                onDragEnd={dragEndHandler}
-                onDrop={dropHandler}
-                onDragOver={dragoverHandler}
-                className={`
-                  icon 
-                  ${icon.isSlot ? 'isSlot' : ''} 
-                  ${icon.isFalling ? 'iconFalling' : ''} 
-                  ${icon.isNewSlot ? 'iconPopForward' : ''}
-                `}
-              />
+              {shouldShow && (
+                <img
+                  id={icon.id}
+                  src={icon.src}
+                  grid={icon.grid}
+                  type={icon.type}
+                  isslot={(icon.isSlot).toString()}
+                  draggable="true"
+                  onDragStart={dragstartHandler}
+                  onDragEnd={dragEndHandler}
+                  onDrop={dropHandler}
+                  onDragOver={dragoverHandler}
+                  className={`
+                    icon 
+                    ${icon.isSlot ? 'isSlot' : ''} 
+                    ${icon.isFalling ? 'iconFalling' : ''} 
+                    ${icon.isNewSlot ? 'iconPopForward' : ''}
+                  `}
+                />
+              )}
             </div>
           );
         })}
+          {isCountingDown && (
+            <div className="countdown-overlay">
+              <div className="countdown-number">{countdown > 0 ? countdown : "GO!"}</div>
+            </div>
+          )}
 
           {gameOver && (
           <div className="overlay">
@@ -900,5 +847,3 @@ function IconGrid({num}: IconGridProps){
     </div>
   );
 }
-
-export default IconGrid;
