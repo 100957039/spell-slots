@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "app/components/iconGrid.tsx"  ],
+, "app/components/iconGrid.jsx", "app/layout.jsx", "app/page.jsx", "app/components/slots.jsx", "app/components/menu.jsx", "app/components/leaderboard.jsx"  ],
   "exclude": ["node_modules"]
 }

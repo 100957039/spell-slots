@@ -3,25 +3,43 @@ import { useState, useEffect } from "react";
 import IconGrid from "./iconGrid";
 import '../../styles/slots.css';
 
-interface Icon {
-  id: string;
-  grid: number;
-  src: string;
-  type: string | null;
-  isSlot: boolean;
-  isFalling: boolean;
-  isNewSlot: boolean;
-}
+export default function Slot({num, returnToMenu}) {
+  const [stage, setStage] = useState('idle');
+  const [slotResults, setSlotResults] = useState([]);
+  const [spinnerIcons, setSpinnerIcons] = useState([]);
+  
+  const slotRoll = [
+    {
+      src: "/icons/Heart_Icon.png",
+      type: "heart"
+    },
+    {
+      src: "/icons/Diamond_Icon.png",
+      type: "diamond"
+    },
+    {
+      src: "/icons/Spade_Icon.png",
+      type: "spade"
+    },
+    {
+      src: "/icons/Clover_Icon.png",
+      type: "clover"
+    },
+    {
+      src: "/icons/7_Icon.png",
+      type: "7"
+    }
+  ];
 
-interface SlotsProps {
-  num: number;
-  returnToMenu: () => void;
-}
-
-export default function Slot({num, returnToMenu}: SlotsProps) {
-  const [stage, setStage] = useState<'idle' | 'spinning' | 'landed' | 'playing'>('idle');
-  const [countdown, setCountdown] = useState<number>(3);
-  const [slotResults, setSlotResults] = useState<Icon[]>([]);
+  useEffect(() => {
+    if (stage === 'idle') {
+      const initialIcons = [genSlot(), genSlot(), genSlot()];
+      if (initialIcons[0].type === initialIcons[1].type && initialIcons[1].type === initialIcons[2].type) {
+        initialIcons[2] = genSlot(initialIcons[0].type || "");
+      }
+      setSlotResults(initialIcons);
+    }
+  }, []);
 
   const handleSpin = () => {
     const results = [genSlot(), genSlot(), genSlot()];
@@ -38,9 +56,9 @@ export default function Slot({num, returnToMenu}: SlotsProps) {
     }, 2000);
   };
 
-  function genSlot(excludeType: string = ""): Icon {
+  function genSlot(excludeType = "") {
     const ICON_CHANCE = 100;
-    let icon: Icon = {
+    let icon = {
       id: "",
       grid: -1,
       src: "",
@@ -124,39 +142,41 @@ export default function Slot({num, returnToMenu}: SlotsProps) {
   return (
     <div className="h-screen w-screen flex flex-col items-center justify-center">
       
-      {/* IDLE STAGE: The Big Button */}
-      {stage === 'idle' && (
-        <div className="flex flex-col items-center gap-12">
+      {(stage === 'idle' || stage === 'spinning' || stage === 'landed') && (
+        <div className="flex flex-col items-center gap-8">
           <div className="ready-text-container">
             <h1 className="ready-text">READY TO SPIN?</h1>
-            <div className="ready-subtext">INSERT MANA TO SPIN</div>
+            <div className="ready-subtext">INSERT MANA TO START</div>
           </div>
-          <button className="spin-button" onClick={handleSpin}>
-            SPIN
-          </button>
-        </div>
-      )}
 
-      {/* SPINNING & LANDED STAGE */}
-      {(stage === 'spinning' || stage === 'landed') && (
-        <div className="slot-machine-container">
-          <div className="slot-reel-frame">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="reel">
-                {stage === 'spinning' ? (
-                  <div className="blur-strip">
-                     <div className="blur-icon" />
-                     <div className="blur-icon" />
-                     <div className="blur-icon" />
-                  </div>
-                ) : (
-                  /* The actual result icon */
-                  <div className="is-landed">
-                    <img src={slotResults[i]?.src} className="slot-display-icon" />
-                  </div>
-                )}
-              </div>
-            ))}
+          <div className="flex flex-row items-center gap-8 bg-[#0a0a0a] p-6 rounded-3xl border-4 border-[#222] shadow-2xl">
+            <div className="slot-reel-frame">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="reel">
+                  {stage === 'spinning' ? (
+                    <div className="blur-strip">
+                      <div className="blur-icon" />
+                      <div className="blur-icon" />
+                      <div className="blur-icon" />
+                    </div>
+                  ) : (
+                    <div className="is-landed">
+                      <img src={slotResults[i]?.src} className="slot-display-icon" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-center">
+              <button 
+                className={`spin-button ${stage !== 'idle' ? 'button-disabled' : ''}`} 
+                onClick={stage === 'idle' ? handleSpin : undefined}
+                disabled={stage !== 'idle'}
+              >
+                SPIN
+              </button>
+            </div>
           </div>
         </div>
       )}
