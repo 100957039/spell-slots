@@ -31,6 +31,7 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
+  user-select: none;
 }
 
 .title-word.spell {
@@ -50,6 +51,7 @@
   text-transform: uppercase;
   /* Golden gradient effect */
   background: linear-gradient(to bottom, #ffe082 0%, #ffd700 50%, #b8860b 100%);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   line-height: 0.9;
@@ -79,6 +81,7 @@
   transition: all 0.3s ease;
   width: 100%;
   text-align: center;
+  user-select: none;
 }
 
 .menu-btn:hover {

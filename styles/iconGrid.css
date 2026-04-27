@@ -18,6 +18,7 @@
   
   margin: 0 auto;
   position: relative;
+  user-select: none;
 }
 
 .tile {
@@ -28,6 +29,7 @@
   justify-content: center;
   /* background-image: url("/icons/Tile_Background.png"); */
   background-size: contain;
+  user-select: none;
 }
 
 .icon {
@@ -36,6 +38,7 @@
   object-fit: contain; /* Ensures the icon doesn't stretch or bleed out */
   cursor: grab;
   transition: transform 0.1s ease, opacity 0.2s;
+  user-select: none;
 }
 
 .icon:hover {
@@ -61,6 +64,7 @@
   outline-offset: -3px;
   box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
   z-index: 5;
+  user-select: none;
 }
 
 .overlay {
@@ -75,6 +79,7 @@
   align-items: center;
   z-index: 100;
   border-radius: 12px;
+  user-select: none;
 }
 
 .modal {
@@ -84,6 +89,7 @@
   text-align: center;
   box-shadow: 0 0 20px gold;
   color: #333;
+  user-select: none;
 }
 
 .modal button {
@@ -94,6 +100,7 @@
   border: none;
   font-weight: bold;
   border-radius: 4px;
+  user-select: none;
 }
 
 /* The icon itself will slide from above to its current position */
@@ -120,13 +127,6 @@
 @keyframes popIn {
   0% { transform: scale(0); }
   100% { transform: scale(1); }
-}
-
-/* Add this to your tile CSS if you want the "matched" squares to flash */
-.tileMatched {
-  filter: brightness(2);
-  transform: scale(1.1);
-  transition: all 0.2s;
 }
 
 /* High-impact forward pop for special icon creation */
@@ -168,6 +168,7 @@
   box-sizing: border-box;
   overflow: hidden;
   gap: 5px; /* Tiny gap between header and board */
+  user-select: none;
 }
 
 @media (max-height: 800px) {
@@ -175,9 +176,11 @@
     /* Scale down only when the screen gets too short for the new 65px tiles */
     transform: scale(0.85);
     transform-origin: top center;
+    user-select: none;
   }
   .game-wrapper {
     padding-top: 2vh;
+    user-select: none;
   }
 }
 
@@ -187,6 +190,7 @@
   justify-content: center; /* Keeps the timer centered horizontally */
   width: 100%;
   position: relative;
+  user-select: none;
 }
 
 /* Slimmer, more compact timer */
@@ -200,6 +204,7 @@
   align-items: center;
   gap: 8px;
   min-width: unset; /* Let it shrink to content */
+  user-select: none;
 }
 
 .timer-box .label {
@@ -237,6 +242,7 @@
   align-items: center;
   z-index: 200; /* Higher than everything else */
   pointer-events: none; /* Allows clicks to pass through if needed */
+  user-select: none;
 }
 
 .countdown-number {
@@ -246,6 +252,7 @@
   text-shadow: 0 0 30px rgba(0, 0, 0, 0.8), 0 0 50px rgba(255, 215, 0, 0.5);
   animation: countPop 1s ease-in-out infinite;
   font-family: 'Arial Black', sans-serif;
+  user-select: none;
 }
 
 @keyframes countPop {
@@ -264,11 +271,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  user-select: none;
 }
 
 .back-to-menu-btn {
   position: absolute;
-  left: 0;
+  left: 10px;
   top: 50%;
   /* This is the anchor that keeps it centered */
   transform: translateY(-50%); 
@@ -286,6 +294,7 @@
   
   /* Smooth transition for colors only */
   transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  user-select: none;
 }
 
 .back-to-menu-btn:hover {
@@ -304,4 +313,49 @@
   /* Optional: a very slight brightness change instead of moving */
   filter: brightness(1.2);
   transform: translateY(-50%);
+}
+
+/* --- TIME POTION BUTTON (Enhanced) --- */
+.time-potion-btn {
+  position: absolute;
+  left: 10px; 
+  /* Positioned exactly below the menu button */
+  top: calc(50% + 45px); 
+  transform: translateY(-50%); 
+
+  /* Magical Aesthetic */
+  background: linear-gradient(135deg, rgba(0, 102, 255, 0.2), rgba(153, 0, 255, 0.2));
+  color: #00d4ff;
+  border: 1px solid rgba(0, 212, 255, 0.4);
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  border-radius: 20px; /* More rounded like a bottle */
+  cursor: pointer;
+  z-index: 60;
+  
+  /* Glowing effect */
+  box-shadow: 0 0 10px rgba(0, 102, 255, 0.2);
+  transition: all 0.3s ease;
+  user-select: none;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.time-potion-btn:hover {
+  transform: translateY(-50%) scale(1.05); /* Slight grow on hover */
+  background: linear-gradient(135deg, rgba(0, 102, 255, 0.4), rgba(153, 0, 255, 0.4));
+  border-color: #00d4ff;
+  color: white;
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
+  text-shadow: 0 0 8px #fff;
+}
+
+.time-potion-btn:active {
+  filter: brightness(1.5);
+  transform: translateY(-50%) scale(0.95);
+}
+
+.time-potion-btn {
+  animation: potionPulse 3s infinite ease-in-out;
 }

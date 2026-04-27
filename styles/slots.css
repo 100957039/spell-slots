@@ -14,6 +14,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  user-select: none;
 }
 
 .spin-button:hover {
@@ -28,7 +29,7 @@
 /* Horizontal Row for Reels */
 .slot-reel-frame {
   display: flex;
-  flex-direction: row; /* Forces Horizontal */
+  flex-direction: row;
   gap: 15px;
   background: #111;
   padding: 20px;
@@ -40,44 +41,42 @@
 .reel {
   width: 100px;
   height: 100px;
-  background: #0a0a0a; /* Slightly lighter than pure black */
-  /* This gold border ensures dark icons like the Spade are visible */
+  background: #0a0a0a;
   border: 2px solid rgba(255, 215, 0, 0.4); 
   border-radius: 12px;
   overflow: hidden;
   position: relative;
-  
-  /* PERFECT CENTERING */
   display: flex;
-  align-items: center;
-  justify-content: center;
-  
-  /* Subtle inner glow to separate the icon from the edge */
   box-shadow: inset 0 0 15px rgba(255, 215, 0, 0.1);
+  user-select: none;
 }
 /* Spinning Animation */
-.blur-strip {
+.reel-strip {
   display: flex;
   flex-direction: column;
-  animation: reelSpinScroll 0.1s linear infinite;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  transform: translateY(-2600px);
+  transition: transform 1s cubic-bezier(0.25, 1, 0.5, 1);
+  user-select: none;
 }
 
-.blur-icon {
-  width: 100px;
-  height: 100px;
-  background: linear-gradient(to bottom, #ffd70033, #ffd700aa, #ffd70033);
-  filter: blur(10px);
+.is-spinning {
+  /* This moves the strip from bottom to the top icon (slotResults) */
+  animation: rapid-scroll 1s linear infinite;
 }
 
-@keyframes reelSpinScroll {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-100px); }
+.is-landing {
+  /* This transition moves from wherever the loop was to the top icon (index 0) */
+  transform: translateY(0);
+  animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.slot-display-icon {
-  width: 80px;
-  height: 80px;
-  padding: 10px;
+@keyframes rapid-scroll {
+  from { transform: translateY(-2600px); }
+  to { transform: translateY(-100px); }
 }
 
 .is-landed {
@@ -86,7 +85,6 @@
   justify-content: center;
   width: 100%;
   height: 100%;
-  animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 @keyframes bounceIn {
@@ -99,10 +97,18 @@
   width: 75px;  /* Slightly smaller to give 'breathing room' */
   height: 75px;
   object-fit: contain;
-  
-  /* THE FIX: Add a subtle white/gold drop shadow directly to the icon 
-     so dark colors don't bleed into the background */
+  user-select: none;
   filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.2));
+}
+
+.icon-wrapper {
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  user-select: none;
 }
 
 /* Optional: Add a 'shimmer' effect to the reel while landed */
@@ -140,6 +146,7 @@
   /* Glow and Floating Animation */
   filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.3));
   animation: shimmer 3s linear infinite, float 4s ease-in-out infinite;
+  user-select: none;
 }
 
 /* Smooth left-to-right color sweep */
@@ -151,13 +158,4 @@
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
-}
-
-/* A secondary sub-text to fill the space */
-.ready-subtext {
-  color: rgba(255, 215, 0, 0.6);
-  font-family: monospace;
-  font-size: 1rem;
-  letter-spacing: 6px;
-  margin-top: -5px;
 }
