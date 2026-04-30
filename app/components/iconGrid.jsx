@@ -6,8 +6,8 @@ import '../../styles/iconGrid.css';
   Takes provided icons and returns them in grid formation
 */
 export default function IconGrid({num, returnToMenu, slots}){
-  const MIN_TIME = 120;
-  const MAX_TIME = 180;
+  const MIN_TIME = 9999;
+  const MAX_TIME = 99999;
   const getRandomTime = (min, max) => {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   };
@@ -17,6 +17,7 @@ export default function IconGrid({num, returnToMenu, slots}){
   const [timeLeft, setTimeLeft] = useState(() => getRandomTime(MIN_TIME, MAX_TIME));
   const [isCountingDown, setIsCountingDown] = useState(true);
   const [countdown, setCountdown] = useState(3);
+  const [isReshuffling, setIsReshuffling] = useState(false);
   const [timePotion, setTimePotion] = useState(10);
   const dragItem = useRef(null);
   
@@ -31,6 +32,7 @@ export default function IconGrid({num, returnToMenu, slots}){
 
   useEffect(() => {
     setHasMounted(true);
+    const newSlotList = structuredClone(slots);
 
     function genIconList(slotList){
       const NUM_OF_SLOTS = 5;
@@ -48,13 +50,14 @@ export default function IconGrid({num, returnToMenu, slots}){
 
       const fullBoard = num * num;
       // Calculates the center of the second to last row for the slot icons
-      const centerSTLSlot = (num * (num-1)) + (Math.floor(num/2));
+      const centerSlot = (num * (num-1)) + (Math.floor(num/2));
 
       for(let i=0; i < fullBoard; i++){
-        if(i == (centerSTLSlot - 2)){
+        if(i == (centerSlot - 2)){
           for(let j=0; j < NUM_OF_SLOTS; j++){
             slotList[j].id = `icon${i.toString()}`;
             slotList[j].grid = i;
+            slotList[j].type = null;
 
             tempIconList.push(slotList[j]);
             i++;
@@ -73,8 +76,8 @@ export default function IconGrid({num, returnToMenu, slots}){
       }
       setIconList(tempIconList);
     }
-
-    genIconList(slots);
+    
+    genIconList(newSlotList);
   }, []);
 
   useEffect(() => {
@@ -98,7 +101,6 @@ export default function IconGrid({num, returnToMenu, slots}){
       if (checkWin(iconList)) {
         setGameOver(true);
       } else if (!hasPossibleMoves(iconList)){
-        alert("No more moves! Reshuffling..."); // Replace with a pretty modal later
         setIconList(currentBoard => reshuffleBoard(currentBoard));
       }
     }
@@ -106,7 +108,7 @@ export default function IconGrid({num, returnToMenu, slots}){
 
   useEffect(() => {
     // Stop the timer if game is over
-    if (gameOver || timeLeft <= 0 || isCountingDown) return;
+    if (gameOver || timeLeft <= 0 || isCountingDown || isReshuffling) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -120,10 +122,15 @@ export default function IconGrid({num, returnToMenu, slots}){
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [timeLeft, gameOver, isCountingDown]);
+  }, [timeLeft, gameOver, isCountingDown, isReshuffling]);
 
-  function genRandIcon(index, excludeType, genSlotIcon = false) {
-    const ICON_CHANCE = 100;
+  useEffect(() => {
+      const timer = setTimeout(() => setIsReshuffling(false), 1500);
+      return () => clearTimeout(timer);
+  }, [isReshuffling]);
+
+  function genRandIcon(index, excludeType, genSlotIcon = false, genOnlyNormalIcon = false) {
+    const iconChance = genOnlyNormalIcon ? 95 : 100;
     let icon = {
       id: "",
       grid: -1,
@@ -131,18 +138,18 @@ export default function IconGrid({num, returnToMenu, slots}){
       type: "",
       isSlot: false,
       isFalling: false,
-      isNewSlot: false
+      isNewSlot: false,
+      isSlotFilled: true
     }
     let iconType;
 
     if(genSlotIcon){
       iconType = 100;
     } else {
-      iconType = Math.floor(Math.random() * ICON_CHANCE);
+      iconType = Math.floor(Math.random() * iconChance);
     }
     
-    
-    if(iconType < 18){
+    if(iconType < 19){
       // Water
       icon = {
         id: `icon${index.toString()}`,
@@ -151,10 +158,11 @@ export default function IconGrid({num, returnToMenu, slots}){
         type: "water",
         isSlot: false,
         isFalling: false,
-        isNewSlot: false
+        isNewSlot: false,
+        isSlotFilled: true
       }
       
-    } else if(iconType < 36){
+    } else if(iconType < 38){
       // Earth
       icon = {
         id: `icon${index.toString()}`,
@@ -163,10 +171,11 @@ export default function IconGrid({num, returnToMenu, slots}){
         type: "earth",
         isSlot: false,
         isFalling: false,
-        isNewSlot: false
+        isNewSlot: false,
+        isSlotFilled: true
       }
 
-    } else if(iconType < 54){
+    } else if(iconType < 57){
       // Fire
       icon = {
         id: `icon${index.toString()}`,
@@ -175,10 +184,11 @@ export default function IconGrid({num, returnToMenu, slots}){
         type: "fire",
         isSlot: false,
         isFalling: false,
-        isNewSlot: false
+        isNewSlot: false,
+        isSlotFilled: true
       }
 
-    } else if(iconType < 72){
+    } else if(iconType < 76){
       // Air
       icon = {
         id: `icon${index.toString()}`,
@@ -187,10 +197,11 @@ export default function IconGrid({num, returnToMenu, slots}){
         type: "air",
         isSlot: false,
         isFalling: false,
-        isNewSlot: false
+        isNewSlot: false,
+        isSlotFilled: true
       }
 
-    } else if(iconType < 90){
+    } else if(iconType < 95){
       // Salt
       icon = {
         id: `icon${index.toString()}`,
@@ -199,7 +210,8 @@ export default function IconGrid({num, returnToMenu, slots}){
         type: "salt",
         isSlot: false,
         isFalling: false,
-        isNewSlot: false
+        isNewSlot: false,
+        isSlotFilled: true
       }
       
     // } else if(iconType < 90){
@@ -211,14 +223,15 @@ export default function IconGrid({num, returnToMenu, slots}){
     //     type: "sulfur",
     //     isSlot: false,
     //     isFalling: false,
-    //     isNewSlot: false
+    //     isNewSlot: false,
+    //     isSlotFilled: true
     //   }
       
     } else {
       // Slot symbol
-      const slotType = Math.floor(Math.random() * ICON_CHANCE);
+      const slotType = Math.floor(Math.random() * iconChance);
 
-      if(slotType < 25){
+      if(slotType < 20){
         // Heart
         icon = {
           id: `icon${index.toString()}`,
@@ -227,10 +240,11 @@ export default function IconGrid({num, returnToMenu, slots}){
           type: "heart",
           isSlot: true,
           isFalling: false,
-          isNewSlot: false
+          isNewSlot: false,
+          isSlotFilled: true
         }
       
-      } else if(slotType < 50){
+      } else if(slotType < 40){
         // Diamond
         icon = {
           id: `icon${index.toString()}`,
@@ -239,10 +253,11 @@ export default function IconGrid({num, returnToMenu, slots}){
           type: "diamond",
           isSlot: true,
           isFalling: false,
-          isNewSlot: false
+          isNewSlot: false,
+          isSlotFilled: true
         }
 
-      } else if(slotType < 75){
+      } else if(slotType < 60){
         // Spade
         icon = {
           id: `icon${index.toString()}`,
@@ -251,10 +266,11 @@ export default function IconGrid({num, returnToMenu, slots}){
           type: "spade",
           isSlot: true,
           isFalling: false,
-          isNewSlot: false
+          isNewSlot: false,
+          isSlotFilled: true
         }
 
-      } else if(slotType < 95){
+      } else if(slotType < 80){
         // Clover
         icon = {
           id: `icon${index.toString()}`,
@@ -263,7 +279,8 @@ export default function IconGrid({num, returnToMenu, slots}){
           type: "clover",
           isSlot: true,
           isFalling: false,
-          isNewSlot: false
+          isNewSlot: false,
+          isSlotFilled: true
         }
 
       } else {
@@ -275,7 +292,8 @@ export default function IconGrid({num, returnToMenu, slots}){
           type: "7",
           isSlot: true,
           isFalling: false,
-          isNewSlot: false
+          isNewSlot: false,
+          isSlotFilled: true
         }
       }
     }
@@ -351,7 +369,7 @@ export default function IconGrid({num, returnToMenu, slots}){
     const item2 = tempBoard[index2];
 
     // Ensures move is allowed
-    if (!isAdjacent(item1.grid, item2.grid) && !isCenter(item1.grid, item2.grid)) return;
+    if (!isAdjacent(item1.grid, item2.grid)) return;
 
     tempBoard[index1] = { ...item2, id: item1.id, grid: item1.grid };
     tempBoard[index2] = { ...item1, id: item2.id, grid: item2.grid };
@@ -384,19 +402,12 @@ export default function IconGrid({num, returnToMenu, slots}){
     return false; 
   };
 
-  const isCenter = (grid1, grid2) => {
-    const size = num;
-    const centerRow = size - 1;
-    const centerColumnSlot = Math.floor(size/2);
-    const centerColumn = [centerColumnSlot - 2, centerColumnSlot - 1, centerColumnSlot, centerColumnSlot + 1, centerColumnSlot + 2];
-    const centerIndexes = centerColumn.map(col => (centerRow * size) + col);
-    return centerIndexes.includes(grid1) && centerIndexes.includes(grid2);
-  }
-
   const isValidMove = (tempIconList, item1, item2) => {
     const checkVertical = num;
     const CHECK_HORIZONTAL = 1;
+    const finalRow = num * (num - 1);
     const centerSquare = (checkVertical * (checkVertical-1)) + (Math.floor(checkVertical/2));
+    const centerIndexes = [centerSquare - 2, centerSquare - 1, centerSquare, centerSquare + 1, centerSquare + 2];
     const isCenterSquare = (
       (item1.grid >= (centerSquare - 2)) &&
       (item1.grid <= (centerSquare + 2)) ||
@@ -405,15 +416,6 @@ export default function IconGrid({num, returnToMenu, slots}){
     );
     const MIN_COORD = 1;
     const maxCoord = num - 2;
-    const MATCH_TYPE = [
-      "up",
-      "left",
-      "down",
-      "right",
-      "vertical",
-      "horizontal",
-      "slot"
-    ];
     // Check Up, Left, Down, Right, Vertical, Horizontal
     const checkList = [
       [checkVertical, (checkVertical*2)],
@@ -424,15 +426,9 @@ export default function IconGrid({num, returnToMenu, slots}){
       [CHECK_HORIZONTAL, -CHECK_HORIZONTAL],
     ];
     const itemList = [tempIconList[item2.grid], tempIconList[item1.grid]];
-    let matchType = [];
     let indexes = [];
 
-    // Slot icons can always be switched with each other
-    if(item1.isSlot && item2.isSlot){
-      matchType.push(MATCH_TYPE[6]); 
-      indexes.push(item2.grid, item1.grid);
-
-    } else if(!isCenterSquare) {
+    if(!isCenterSquare) {
       for(let i = 0; i < (itemList.length); i++){
         for(let j = 0; j < checkList.length; j++){
           const indexX = itemList[i].grid % num;
@@ -452,13 +448,22 @@ export default function IconGrid({num, returnToMenu, slots}){
           if(requireCheck[j]){
 
             if(itemList[i].type == tempIconList[check1].type && itemList[(i)].type == tempIconList[check2].type){
-              matchType.push(MATCH_TYPE[j]); 
               indexes.push(itemList[i].grid, check1, check2);
             }
           }
         }
       }
+    } else {
+      const centerIndex = (item2.grid - finalRow) - 2;
+      if(!centerIndexes.includes(item1.grid) && item1.type == slots[centerIndex].type && !item2.isSlotFilled){
+        indexes.push(item2.grid, item1.grid);
+      }
+    }
+    
+    if(indexes.length == 0 && (item1.isSlot && item2.isSlot) && !isCenterSquare){
+      indexes.push(item2.grid, item1.grid);
     } 
+
     return indexes;
   }
 
@@ -471,6 +476,7 @@ export default function IconGrid({num, returnToMenu, slots}){
     const centerIndexes = centerColumn.map(col => (centerRow * gridNumber) + col);
     let tempIconList = [...tempBoard];
     let newIndexes = [];
+    const isCenterMove = indexes.some(r=> centerIndexes.includes(r));
 
     // If move was between 2 slot icons, stop processing
     if(indexes.length >= BASIC_MATCH){
@@ -492,6 +498,7 @@ export default function IconGrid({num, returnToMenu, slots}){
       // Check if the match is a slot match
       for(let i = 0; i < newIndexes.length - 1; i++){
         if(!tempIconList[newIndexes[i]].isSlot){
+          console.log(`Not slot match: ${tempIconList[newIndexes[i]].type}`);
           isSlotMatch = false;
           break;
         }
@@ -505,6 +512,7 @@ export default function IconGrid({num, returnToMenu, slots}){
       // If matching above basic, make moved icon a slot symbol
       if (isSlotMatch){
         // If it's a slot match, generate a new slot that's not the same type
+        console.log(`Slot Match: ${slotType}`);
         const newSlot = genRandIcon(newIndexes[0], slotType, true);
         tempIconList[newIndexes[0]] = {...newSlot, isNewSlot: true};
       } else if(newIndexes.length > BASIC_MATCH) {
@@ -651,6 +659,65 @@ export default function IconGrid({num, returnToMenu, slots}){
           currentList.map(icon => ({ ...icon, isFalling: false, isNewSlot: false }))
         );
       }, 300);
+
+    } else if(isCenterMove) {
+      console.log("Center");
+      // If the match includes the center, only clear the center and make the rest fall
+      tempIconList[indexes[0]] = { ...tempIconList[indexes[0]], isNewSlot: true, isSlotFilled: true };
+      tempIconList[indexes[1]] = { ...tempIconList[indexes[1]], type: null, src: "/icons/error.png" };
+
+      const column = indexes[0] - (gridNumber * (gridNumber - 1));
+      let columnIndexes = [];
+      for (let row = 0; row < gridNumber; row++) {
+        columnIndexes.push(row * gridNumber + column);
+      }
+
+      let updatedColumn = new Array(gridNumber);
+
+      const centerIcon = tempIconList[columnIndexes[centerRow]];
+      let movableIcons = columnIndexes
+        .filter((_, rowIndex) => rowIndex !== centerRow)
+        .map(index => tempIconList[index])
+        .filter(icon => icon.type !== null);
+
+      const missingCount = (gridNumber - 1) - movableIcons.length;
+      let newIcons = [];
+      for (let i = 0; i < missingCount; i++) {
+          newIcons.push({ ...genRandIcon(column), isFalling: true });
+      }
+
+      const combinedMovable = [...newIcons, ...movableIcons];
+      
+      let movablePointer = 0;
+      for (let i = 0; i < gridNumber; i++) {
+        if (i === centerRow) {
+            updatedColumn[i] = centerIcon;
+        } else {
+            updatedColumn[i] = combinedMovable[movablePointer++];
+        }
+      }
+
+      columnIndexes.forEach((actualGridIndex, i) => {
+        const targetIcon = updatedColumn[i];
+        
+        // Determine if it actually moved or if it's new
+        // If the icon's original grid position isn't where it is now, it's falling
+        const hasMoved = targetIcon.grid !== actualGridIndex;
+
+        tempIconList[actualGridIndex] = {
+          ...targetIcon,
+          id: tempIconList[actualGridIndex].id,
+          grid: actualGridIndex,
+          isFalling: hasMoved || targetIcon.isFalling
+        };
+      }); 
+
+      // Resets falling animation
+      setTimeout(() => {
+        setIconList(currentList => 
+          currentList.map(icon => ({ ...icon, isFalling: false, isNewSlot: false }))
+        );
+      }, 300);
     }
 
     if(checkWin(tempIconList)){
@@ -675,7 +742,7 @@ export default function IconGrid({num, returnToMenu, slots}){
       const current = tempIconList[i];
       let notCenter;
 
-      // Skip nulls, empty types, and center slots
+      // Skip nulls and empty types
       if (!current.type) continue;
  
       // Only check if we have at least 2 tiles remaining to the right
@@ -738,8 +805,8 @@ export default function IconGrid({num, returnToMenu, slots}){
 
         const foundMatches = checkMatches(virtualBoard);
 
-        if (foundMatches.length > 0 && !virtualBoard[foundMatches[0]].isSlot) {
-          console.log(`Possible move not slot ${i} and ${neighborIndex}`);
+        if (foundMatches.length > 0) {
+          console.log(`Possible move ${i} and ${neighborIndex}`);
           return true;
         }
       }
@@ -752,6 +819,7 @@ export default function IconGrid({num, returnToMenu, slots}){
 
     let isBoardValid = false;
     let reshuffledFullBoard = [];
+    setIsReshuffling(true);
 
     while (!isBoardValid) {
       for (let i = movableIcons.length - 1; i > 0; i--) {
@@ -779,7 +847,13 @@ export default function IconGrid({num, returnToMenu, slots}){
 
   const checkWin = (tempBoard) => {
     const centerSquare = (num * (num-1)) + (Math.floor(num/2));
-    if(tempBoard[centerSquare - 2].type == tempBoard[centerSquare - 1].type && tempBoard[centerSquare - 1].type == tempBoard[centerSquare].type && tempBoard[centerSquare].type == tempBoard[centerSquare + 1].type && tempBoard[centerSquare + 1].type == tempBoard[centerSquare + 2].type){
+    if(
+      tempBoard[centerSquare - 2].type == slots[0].type && 
+      tempBoard[centerSquare - 1].type == slots[1].type && 
+      tempBoard[centerSquare].type == slots[2].type && 
+      tempBoard[centerSquare + 1].type == slots[3].type &&
+      tempBoard[centerSquare + 2].type == slots[4].type
+    ){
       return true;
     }
     return false;
@@ -829,16 +903,17 @@ export default function IconGrid({num, returnToMenu, slots}){
                   grid={icon.grid}
                   type={icon.type}
                   isslot={(icon.isSlot).toString()}
-                  draggable="true"
+                  draggable={!isCenterSquare ? "true" : false}
                   onDragStart={!isCountingDown ? dragstartHandler : undefined}
                   onDragEnd={!isCountingDown ? dragEndHandler : undefined}
                   onDrop={!isCountingDown ? dropHandler : undefined}
                   onDragOver={!isCountingDown ? dragoverHandler : undefined}
                   className={`
-                    icon 
+                    ${!isCenterSquare ? 'icon' : 'centerIcon'} 
                     ${icon.isSlot ? 'isSlot' : ''} 
                     ${icon.isFalling ? 'iconFalling' : ''} 
                     ${icon.isNewSlot ? 'iconPopForward' : ''}
+                    ${isCenterSquare && !icon.isSlotFilled ? 'isEmpty' : ''}
                   `}
                 />
               )}
@@ -848,6 +923,12 @@ export default function IconGrid({num, returnToMenu, slots}){
           {isCountingDown && (
             <div className="countdown-overlay">
               <div className="countdown-number">{countdown > 0 ? countdown : "GO!"}</div>
+            </div>
+          )}
+
+          {isReshuffling && (
+            <div className="reshuffle-overlay">
+              <div className="reshuffle-text">{"No moves left.\nReshuffling..."}</div>
             </div>
           )}
 

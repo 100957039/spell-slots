@@ -62,13 +62,14 @@ export default function Slot({num, returnToMenu}) {
       type: "",
       isSlot: false,
       isFalling: false,
-      isNewSlot: false
+      isNewSlot: false,
+      isSlotFilled: false
     }
     
     // Slot symbol
     const slotType = Math.floor(Math.random() * ICON_CHANCE);
 
-    if(slotType < 25){
+    if(slotType < 20){
       // Heart
       icon = {
         id: ``,
@@ -77,10 +78,11 @@ export default function Slot({num, returnToMenu}) {
         type: "heart",
         isSlot: true,
         isFalling: false,
-        isNewSlot: false
+        isNewSlot: false,
+      isSlotFilled: false
       }
     
-    } else if(slotType < 50){
+    } else if(slotType < 40){
       // Diamond
       icon = {
         id: ``,
@@ -89,10 +91,11 @@ export default function Slot({num, returnToMenu}) {
         type: "diamond",
         isSlot: true,
         isFalling: false,
-        isNewSlot: false
+        isNewSlot: false,
+      isSlotFilled: false
       }
 
-    } else if(slotType < 75){
+    } else if(slotType < 60){
       // Spade
       icon = {
         id: ``,
@@ -101,10 +104,11 @@ export default function Slot({num, returnToMenu}) {
         type: "spade",
         isSlot: true,
         isFalling: false,
-        isNewSlot: false
+        isNewSlot: false,
+      isSlotFilled: false
       }
 
-    } else if(slotType < 95){
+    } else if(slotType < 80){
       // Clover
       icon = {
         id: ``,
@@ -113,7 +117,8 @@ export default function Slot({num, returnToMenu}) {
         type: "clover",
         isSlot: true,
         isFalling: false,
-        isNewSlot: false
+        isNewSlot: false,
+      isSlotFilled: false
       }
 
     } else {
@@ -125,7 +130,8 @@ export default function Slot({num, returnToMenu}) {
         type: "7",
         isSlot: true,
         isFalling: false,
-        isNewSlot: false
+        isNewSlot: false,
+      isSlotFilled: false
       }
     }
 
