@@ -3,7 +3,9 @@ import { useState, useRef } from "react";
 import IconGrid from "./iconGrid";
 import '../../styles/slots.css';
 
-export default function Slot({num, returnToMenu}) {
+export default function Slot({num, returnToMenu, time}) {
+  const MIN_TIME = 120;
+  const MAX_TIME = 180;
   const [stage, setStage] = useState('idle');  
   const slotRoll = [
     {
@@ -27,19 +29,34 @@ export default function Slot({num, returnToMenu}) {
       type: "7"
     }
   ];
+  const timerRoll = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
-  const [spinnerIcons, setSpinnerIcons] = useState([slotRoll[0], slotRoll[0], slotRoll[0], slotRoll[0], slotRoll[0]]);
-  const [slotResults, setSlotResults] = useState([...spinnerIcons]);
+  const [slotResults, setSlotResults] = useState([slotRoll[0], slotRoll[0], slotRoll[0], slotRoll[0], slotRoll[0]]);
+  const [timeResults, setTimeResults] = useState(0);
+  const [timeDisplay, setTimeDisplay] = useState([1, 1, 1]);
   const [isLooping, setIsLooping] = useState(false);
+  const [timerOffsets, setTimerOffsets] = useState([0, 0, 0]);
+
+  const getRandomTime = (min, max) => {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  };
 
   const handleSpin = () => {
     // Generates the result icons to be used in the game
     const results = [genSlot(), genSlot(), genSlot(), genSlot(), genSlot()];
+    const time = getRandomTime(MIN_TIME, MAX_TIME);
+    const newTime = time.toString().split('').map(Number);
+    const newOffsets = newTime.map(digit => -(digit * 50)); // 50px per digit
+    
     
     if(results[0].type === results[1].type && results[1].type === results[2].type && results[2].type === results[3].type && results[3].type === results[4].type){
       results[4] = genSlot(results[0].type || "");
     }
+
     setSlotResults(results);
+    setTimeResults(time);
+    setTimeDisplay(newTime);
+    setTimerOffsets(newOffsets);
     setStage('spinning');
     setIsLooping(true);
 
@@ -47,7 +64,6 @@ export default function Slot({num, returnToMenu}) {
       setIsLooping(false);
 
       setTimeout(() => {
-        setSpinnerIcons(results);
         setTimeout(() => setStage('playing'), 1200);
       }, 1400); 
   }, 1000); 
@@ -151,6 +167,37 @@ export default function Slot({num, returnToMenu}) {
             <h1 className="ready-text">READY TO SPIN?</h1>
           </div>
 
+          <div className="timer-reel-frame">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="timer-reel" draggable="false">
+                <div 
+                  className={`timer-strip 
+                    ${isLooping ? 'timer-is-spinning' : ''} 
+                    ${stage === 'spinning' && !isLooping ? 'timer-is-landing' : ''}
+                    `
+                  }
+                  style={{ 
+                    animationDelay: `${i * 80}ms`, 
+                    transform: !isLooping ? `translateY(${timerOffsets[i]}px)` : undefined,
+                    transition: !isLooping ? 'transform 0.5s ease-out' : 'none'
+                }}
+                >
+                  <div className="timer-wrapper" draggable="false">
+                    <div>{timeDisplay[i]}</div>
+                  </div>
+                  {[...timerRoll, ...timerRoll, ...timerRoll].map((number, idx) => (
+                    <div key={idx} className="timer-wrapper" draggable="false">
+                      <div>{number}</div>
+                    </div>
+                  ))}
+                  <div className="timer-wrapper" draggable="false">
+                    <div>{timeDisplay[i]}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            </div>
+
           <div className="flex flex-row items-center gap-8 bg-[#0a0a0a] p-6 rounded-3xl border-4 border-[#222] shadow-2xl">
             <div className="slot-reel-frame">
             {[0, 1, 2, 3, 4].map((i) => (
@@ -175,12 +222,12 @@ export default function Slot({num, returnToMenu}) {
                     </div>
                   ))}
                   <div className="icon-wrapper" draggable="false">
-                    <img src={spinnerIcons[i]?.src} className="slot-display-icon" alt="start" draggable="false" />
+                    <img src={slotResults[i]?.src} className="slot-display-icon" alt="start" draggable="false" />
                   </div>
                 </div>
               </div>
             ))}
-          </div>
+            </div>
 
             <div className="flex items-center justify-center">
               <button 
@@ -195,7 +242,7 @@ export default function Slot({num, returnToMenu}) {
         </div>
       )}
       {stage === 'playing' && (
-        <IconGrid num={num} returnToMenu={returnToMenu} slots={slotResults} />
+        <IconGrid num={num} returnToMenu={returnToMenu} slots={slotResults} time={timeResults} />
       )}
     </div>
   );

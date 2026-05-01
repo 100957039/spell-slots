@@ -5,16 +5,11 @@ import '../../styles/iconGrid.css';
 /* 
   Takes provided icons and returns them in grid formation
 */
-export default function IconGrid({num, returnToMenu, slots}){
-  const MIN_TIME = 9999;
-  const MAX_TIME = 99999;
-  const getRandomTime = (min, max) => {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  };
+export default function IconGrid({num, returnToMenu, slots, time}){
   const [iconList, setIconList] = useState([]);
   const [gameOver, setGameOver] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(() => getRandomTime(MIN_TIME, MAX_TIME));
+  const [timeLeft, setTimeLeft] = useState(time);
   const [isCountingDown, setIsCountingDown] = useState(true);
   const [countdown, setCountdown] = useState(3);
   const [isReshuffling, setIsReshuffling] = useState(false);
