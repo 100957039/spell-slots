@@ -4,8 +4,8 @@ import IconGrid from "./iconGrid";
 import '../../styles/slots.css';
 
 export default function Slot({num, returnToMenu, time}) {
-  const MIN_TIME = 120;
-  const MAX_TIME = 180;
+  const MIN_TIME = 999;
+  const MAX_TIME = 999;
   const [stage, setStage] = useState('idle');  
   const slotRoll = [
     {
@@ -29,11 +29,11 @@ export default function Slot({num, returnToMenu, time}) {
       type: "7"
     }
   ];
-  const timerRoll = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  const timerRoll = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
   const [slotResults, setSlotResults] = useState([slotRoll[0], slotRoll[0], slotRoll[0], slotRoll[0], slotRoll[0]]);
   const [timeResults, setTimeResults] = useState(0);
-  const [timeDisplay, setTimeDisplay] = useState([1, 1, 1]);
+  const [timeDisplay, setTimeDisplay] = useState([0, 0, 0]);
   const [isLooping, setIsLooping] = useState(false);
   const [timerOffsets, setTimerOffsets] = useState([0, 0, 0]);
 
@@ -46,7 +46,7 @@ export default function Slot({num, returnToMenu, time}) {
     const results = [genSlot(), genSlot(), genSlot(), genSlot(), genSlot()];
     const time = getRandomTime(MIN_TIME, MAX_TIME);
     const newTime = time.toString().split('').map(Number);
-    const newOffsets = newTime.map(digit => -(digit * 50)); // 50px per digit
+    const newOffsets = newTime.map(digit => -(digit * 50) - 50); // 50px per digit
     
     
     if(results[0].type === results[1].type && results[1].type === results[2].type && results[2].type === results[3].type && results[3].type === results[4].type){

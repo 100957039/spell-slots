@@ -212,6 +212,6 @@
 }
 
 @keyframes timer-rapid-scroll {
-    from { transform: translateY(-1400px); }
+    from { transform: translateY(-1550px); }
     to { transform: translateY(-50px); }
   }

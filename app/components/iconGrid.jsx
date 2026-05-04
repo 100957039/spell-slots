@@ -10,11 +10,20 @@ export default function IconGrid({num, returnToMenu, slots, time}){
   const [gameOver, setGameOver] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(time);
+  const [timeDisplay, setTimeDisplay] = useState([0, 0]);
   const [isCountingDown, setIsCountingDown] = useState(true);
   const [countdown, setCountdown] = useState(3);
   const [isReshuffling, setIsReshuffling] = useState(false);
+  const [isTimePotionUsed, setIsTimePotionUsed] = useState(false);
   const [timePotion, setTimePotion] = useState(10);
+  const [isLooping, setIsLooping] = useState(false);
+  const [timerOffsets, setTimerOffsets] = useState([0, 0]);
+  const [arrow, setArrow] = useState(10);
+  const [isArrowActive, setIsArrowActive] = useState(false);
   const dragItem = useRef(null);
+  
+
+  const timerRoll = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
   
   useEffect(() => {
     if (countdown > 0) {
@@ -103,7 +112,7 @@ export default function IconGrid({num, returnToMenu, slots, time}){
 
   useEffect(() => {
     // Stop the timer if game is over
-    if (gameOver || timeLeft <= 0 || isCountingDown || isReshuffling) return;
+    if (gameOver || timeLeft <= 0 || isCountingDown || isReshuffling || isTimePotionUsed) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -117,7 +126,7 @@ export default function IconGrid({num, returnToMenu, slots, time}){
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [timeLeft, gameOver, isCountingDown, isReshuffling]);
+  }, [timeLeft, gameOver, isCountingDown, isReshuffling, isTimePotionUsed]);
 
   useEffect(() => {
       const timer = setTimeout(() => setIsReshuffling(false), 1500);
@@ -126,6 +135,9 @@ export default function IconGrid({num, returnToMenu, slots, time}){
 
   function genRandIcon(index, excludeType, genSlotIcon = false, genOnlyNormalIcon = false) {
     const iconChance = genOnlyNormalIcon ? 95 : 100;
+    const SPECIAL_ICON_CHANCE = 100;
+    const specialIcon = Math.floor(Math.random() * SPECIAL_ICON_CHANCE);
+
     let icon = {
       id: "",
       grid: -1,
@@ -134,9 +146,41 @@ export default function IconGrid({num, returnToMenu, slots, time}){
       isSlot: false,
       isFalling: false,
       isNewSlot: false,
-      isSlotFilled: true
+      isSlotFilled: true,
+      isSpecial: false
     }
     let iconType;
+
+    if(!genSlotIcon && !genOnlyNormalIcon && specialIcon > 97){
+      if(specialIcon > 98){
+        // Time Potion
+        icon = {
+          id: `icon${index.toString()}`,
+          grid: index,
+          src: "/icons/Time_Potion_Icon.png",
+          type: "time",
+          isSlot: false,
+          isFalling: false,
+          isNewSlot: false,
+          isSlotFilled: true,
+          isSpecial: true
+        };
+      } else if(specialIcon > 97){
+        // Arrow
+        icon = {
+          id: `icon${index.toString()}`,
+          grid: index,
+          src: "/icons/Arrow_Icon.png",
+          type: "arrow",
+          isSlot: false,
+          isFalling: false,
+          isNewSlot: false,
+          isSlotFilled: true,
+          isSpecial: true
+        }
+      }
+      return icon;
+    }
 
     if(genSlotIcon){
       iconType = 100;
@@ -154,7 +198,8 @@ export default function IconGrid({num, returnToMenu, slots, time}){
         isSlot: false,
         isFalling: false,
         isNewSlot: false,
-        isSlotFilled: true
+        isSlotFilled: true,
+        isSpecial: false
       }
       
     } else if(iconType < 38){
@@ -167,7 +212,8 @@ export default function IconGrid({num, returnToMenu, slots, time}){
         isSlot: false,
         isFalling: false,
         isNewSlot: false,
-        isSlotFilled: true
+        isSlotFilled: true,
+        isSpecial: false
       }
 
     } else if(iconType < 57){
@@ -180,7 +226,8 @@ export default function IconGrid({num, returnToMenu, slots, time}){
         isSlot: false,
         isFalling: false,
         isNewSlot: false,
-        isSlotFilled: true
+        isSlotFilled: true,
+        isSpecial: false
       }
 
     } else if(iconType < 76){
@@ -193,7 +240,8 @@ export default function IconGrid({num, returnToMenu, slots, time}){
         isSlot: false,
         isFalling: false,
         isNewSlot: false,
-        isSlotFilled: true
+        isSlotFilled: true,
+        isSpecial: false
       }
 
     } else if(iconType < 95){
@@ -206,7 +254,8 @@ export default function IconGrid({num, returnToMenu, slots, time}){
         isSlot: false,
         isFalling: false,
         isNewSlot: false,
-        isSlotFilled: true
+        isSlotFilled: true,
+        isSpecial: false
       }
       
     // } else if(iconType < 90){
@@ -219,7 +268,8 @@ export default function IconGrid({num, returnToMenu, slots, time}){
     //     isSlot: false,
     //     isFalling: false,
     //     isNewSlot: false,
-    //     isSlotFilled: true
+    //     isSlotFilled: true,
+    //     isSpecial: false
     //   }
       
     } else {
@@ -236,7 +286,8 @@ export default function IconGrid({num, returnToMenu, slots, time}){
           isSlot: true,
           isFalling: false,
           isNewSlot: false,
-          isSlotFilled: true
+          isSlotFilled: true,
+          isSpecial: false
         }
       
       } else if(slotType < 40){
@@ -249,7 +300,8 @@ export default function IconGrid({num, returnToMenu, slots, time}){
           isSlot: true,
           isFalling: false,
           isNewSlot: false,
-          isSlotFilled: true
+          isSlotFilled: true,
+          isSpecial: false
         }
 
       } else if(slotType < 60){
@@ -262,7 +314,8 @@ export default function IconGrid({num, returnToMenu, slots, time}){
           isSlot: true,
           isFalling: false,
           isNewSlot: false,
-          isSlotFilled: true
+          isSlotFilled: true,
+          isSpecial: false
         }
 
       } else if(slotType < 80){
@@ -275,7 +328,8 @@ export default function IconGrid({num, returnToMenu, slots, time}){
           isSlot: true,
           isFalling: false,
           isNewSlot: false,
-          isSlotFilled: true
+          isSlotFilled: true,
+          isSpecial: false
         }
 
       } else {
@@ -288,7 +342,8 @@ export default function IconGrid({num, returnToMenu, slots, time}){
           isSlot: true,
           isFalling: false,
           isNewSlot: false,
-          isSlotFilled: true
+          isSlotFilled: true,
+          isSpecial: false
         }
       }
     }
@@ -442,7 +497,7 @@ export default function IconGrid({num, returnToMenu, slots, time}){
 
           if(requireCheck[j]){
 
-            if(itemList[i].type == tempIconList[check1].type && itemList[(i)].type == tempIconList[check2].type){
+            if(itemList[i].type == tempIconList[check1].type && itemList[i].type == tempIconList[check2].type && !itemList[i].isSpecial){
               indexes.push(itemList[i].grid, check1, check2);
             }
           }
@@ -454,10 +509,33 @@ export default function IconGrid({num, returnToMenu, slots, time}){
         indexes.push(item2.grid, item1.grid);
       }
     }
+
+    console.log(`Before Special`);
+    indexes.forEach((item, index) => {
+      console.log(`${index}: ${item}`);
+    });
     
     if(indexes.length == 0 && (item1.isSlot && item2.isSlot) && !isCenterSquare){
       indexes.push(item2.grid, item1.grid);
-    } 
+    } else if(indexes.length == 0 && !isCenterSquare && isArrowActive){
+      indexes.push(item2.grid, item1.grid);
+      console.log("Arrow Used");
+      setIsArrowActive(false);
+      setArrow(prev => prev - 1);
+    } else if(indexes.length != 0 && (item1.isSpecial || item2.isSpecial)){
+      if(item1.isSpecial){
+        console.log("Item 1 Special");
+        indexes.push(item2.grid);
+      } else{
+        console.log("Item 2 Special");
+        indexes.push(item1.grid);
+      }
+    }
+
+    console.log(`After Special`);
+    indexes.forEach((item, index) => {
+      console.log(`${index}: ${item}`);
+    });
 
     return indexes;
   }
@@ -471,7 +549,9 @@ export default function IconGrid({num, returnToMenu, slots, time}){
     const centerIndexes = centerColumn.map(col => (centerRow * gridNumber) + col);
     let tempIconList = [...tempBoard];
     let newIndexes = [];
+    const TIME_POTION_TYPE = 'time';
     const isCenterMove = indexes.some(r=> centerIndexes.includes(r));
+    let isSpecialMatch = false;
 
     // If move was between 2 slot icons, stop processing
     if(indexes.length >= BASIC_MATCH){
@@ -485,6 +565,27 @@ export default function IconGrid({num, returnToMenu, slots, time}){
 
       if(newIndexes.length < BASIC_MATCH){
         return tempIconList;
+      }
+
+      const lastIndex = newIndexes.length - 1;
+      console.log(`Last Index: ${lastIndex}`);
+      console.log(`Special Icon: ${tempBoard[newIndexes[lastIndex]].type}`);
+
+      if(tempBoard[newIndexes[lastIndex]].isSpecial){
+        const specialIconType = tempBoard[newIndexes[lastIndex]].type;
+        isSpecialMatch = true;
+        
+        console.log(`Special Icon type: ${specialIconType}`);
+        let buttonElement;
+
+        if(specialIconType == TIME_POTION_TYPE){
+          setTimePotion(prev => prev + 1);
+          buttonElement = document.querySelector('.time-potion-btn');
+        } else{
+          setArrow(prev => prev + 1);
+          buttonElement = document.querySelector('.arrow-btn');
+        }
+        triggerFlash(buttonElement);
       }
 
       let isSlotMatch = true;
@@ -510,7 +611,7 @@ export default function IconGrid({num, returnToMenu, slots, time}){
         console.log(`Slot Match: ${slotType}`);
         const newSlot = genRandIcon(newIndexes[0], slotType, true);
         tempIconList[newIndexes[0]] = {...newSlot, isNewSlot: true};
-      } else if(newIndexes.length > BASIC_MATCH) {
+      } else if(newIndexes.length > BASIC_MATCH && !isSpecialMatch || newIndexes.length > (BASIC_MATCH + 1)) {
         const newSlot = genRandIcon(newIndexes[0], "", true);
         tempIconList[newIndexes[0]] = {...newSlot, isNewSlot: true};
       }
@@ -737,8 +838,8 @@ export default function IconGrid({num, returnToMenu, slots, time}){
       const current = tempIconList[i];
       let notCenter;
 
-      // Skip nulls and empty types
-      if (!current.type) continue;
+      // Skip nulls, empty types, and special icons
+      if (!current.type || current.isSpecial) continue;
  
       // Only check if we have at least 2 tiles remaining to the right
       if (x <= size - 3) {
@@ -811,7 +912,6 @@ export default function IconGrid({num, returnToMenu, slots, time}){
 
   const reshuffleBoard = (currentBoard) => {
     let movableIcons = currentBoard.filter(icon => !icon.isSlot);
-
     let isBoardValid = false;
     let reshuffledFullBoard = [];
     setIsReshuffling(true);
@@ -855,11 +955,48 @@ export default function IconGrid({num, returnToMenu, slots, time}){
   }
 
   const useTimePotion = () => {
-    if (timePotion > 0 && !gameOver && !isCountingDown) {
-      setTimeLeft(prev => prev + 30);
-      setTimePotion(prev => prev - 1);
+    const TIME_POTION_MIN = 15;
+    const TIME_POTION_MAX = 60;
+
+    if (timePotion > 0 && !gameOver && !isCountingDown && timeLeft === undefined) return;
+      console.log(`Timer Offset: ${timerOffsets}`);
+      const addTime = Math.floor(Math.random() * (TIME_POTION_MAX - TIME_POTION_MIN + 1)) + TIME_POTION_MIN;
+      const finalTime = timeLeft + addTime;
+      const timeElement = document.querySelector('.timer-box');
+      console.log(`Add Time: ${addTime}`);
+      const digits = addTime.toString().padStart(2, '0').split('').map(Number);
+      const offsets = digits.map(d => -(d * 200) - 200);
+      
+      setTimeDisplay(digits);
+      setTimerOffsets(offsets);
+      setIsLooping(true);
+      setIsTimePotionUsed(true);
+
+      setTimeout(() => {
+        setIsLooping(false);
+        
+        setTimeout(() => {
+          setTimeLeft(finalTime);
+          setIsTimePotionUsed(false);
+          setTimePotion(prev => prev - 1);
+          triggerFlash(timeElement);
+        }, 500);
+      }, 500);
+  };
+
+  const useArrow = () => {
+    if (arrow > 0 && !gameOver && !isCountingDown) {
+      isArrowActive ? setIsArrowActive(false) : setIsArrowActive(true);
     }
   };
+
+  function triggerFlash(buttonElement) {
+  buttonElement.classList.add('is-flashing');
+  
+  setTimeout(() => {
+    buttonElement.classList.remove('is-flashing');
+  }, 500);
+}
 
   return (
     <div className="game-wrapper">
@@ -868,7 +1005,10 @@ export default function IconGrid({num, returnToMenu, slots, time}){
           <span>☰</span> Menu
         </button>
         <button className="time-potion-btn" onClick={useTimePotion} disabled={timePotion <= 0 || gameOver || isCountingDown}>
-          <span>⏱️</span> Time Potion: ({timePotion})
+          <span><img src="/icons/Time_Potion_Icon.png" alt="Time Potion" /></span> Time Potion: ({timePotion})
+        </button>
+        <button className={`arrow-btn ${isArrowActive ? 'arrow-btn-active' : ''}`} onClick={useArrow} disabled={arrow <= 0 || gameOver || isCountingDown}>
+          <span><img src="/icons/Arrow_Icon.png" alt="Arrow" /></span> Arrow: ({arrow})
         </button>
         <div className={`timer-box ${timeLeft < 10 ? 'critical' : ''}`}>
           <span className="label">TIME</span>
@@ -897,7 +1037,7 @@ export default function IconGrid({num, returnToMenu, slots, time}){
                   src={icon.src}
                   grid={icon.grid}
                   type={icon.type}
-                  isslot={(icon.isSlot).toString()}
+                  isslot={(icon.isSlot ?? false).toString()}
                   draggable={!isCenterSquare ? "true" : false}
                   onDragStart={!isCountingDown ? dragstartHandler : undefined}
                   onDragEnd={!isCountingDown ? dragEndHandler : undefined}
@@ -924,6 +1064,36 @@ export default function IconGrid({num, returnToMenu, slots, time}){
           {isReshuffling && (
             <div className="reshuffle-overlay">
               <div className="reshuffle-text">{"No moves left.\nReshuffling..."}</div>
+            </div>
+          )}
+
+          {isTimePotionUsed && (
+            <div className="time-add-overlay">
+              <div className="time-add-frame">
+                {[0, 1].map((i) => (
+                  <div key={i} className="time-add-reel" draggable="false">
+                    <div 
+                      className={`time-add-strip ${isLooping ? 'time-add-is-spinning' : 'time-add-landed'}`}
+                      style={{ 
+                        animationDelay: `${i * 80}ms`, 
+                        transform: !isLooping ? `translateY(${timerOffsets[i]}px)` : 'none',
+                      }}
+                    >
+                      <div className="time-add-wrapper" draggable="false">
+                        <div>{timeDisplay[i] ?? 0}</div>
+                      </div>
+                      {[...timerRoll, ...timerRoll].map((number, idx) => (
+                        <div key={idx} className="time-add-wrapper" draggable="false">
+                          <div>{number}</div>
+                        </div>
+                      ))}
+                      <div className="time-add-wrapper" draggable="false">
+                        <div>{timeDisplay[i] ?? 0}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

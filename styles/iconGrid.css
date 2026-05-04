@@ -371,6 +371,16 @@
   user-select: none;
   text-transform: uppercase;
   letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+}
+
+.time-potion-btn img {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  margin-right: 8px;
+  object-fit: contain;
 }
 
 .time-potion-btn:hover {
@@ -385,4 +395,165 @@
 .time-potion-btn:active {
   filter: brightness(1.5);
   transform: translateY(-50%) scale(0.95);
+}
+
+.arrow-btn {
+  position: absolute;
+  left: 10px; 
+  /* Positioned exactly below the menu button */
+  top: calc(50% + 90px); 
+  transform: translateY(-50%); 
+
+  /* Magical Aesthetic */
+  background: linear-gradient(135deg, rgba(255, 213, 0, 0.4), rgba(255, 196, 0, 0.2));
+  color: #ffd500;
+  border: 1px solid rgba(255, 213, 0, 0.4);
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  border-radius: 20px; /* More rounded like a bottle */
+  cursor: pointer;
+  z-index: 60;
+  
+  /* Glowing effect */
+  box-shadow: 0 0 10px rgba(255, 213, 0, 0.2);
+  transition: all 0.3s ease;
+  user-select: none;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+}
+
+.arrow-btn img {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  margin-right: 8px;
+  object-fit: contain;
+}
+
+.arrow-btn:hover {
+  transform: translateY(-50%) scale(1.05); /* Slight grow on hover */
+  background: linear-gradient(135deg, rgba(255, 213, 0, 0.4), rgba(255, 102, 0, 0.4));
+  border-color: #ffd500;
+  color: white;
+  box-shadow: 0 0 20px rgba(255, 213, 0, 0.6);
+  text-shadow: 0 0 8px #fff;
+}
+
+.arrow-btn:active {
+  filter: brightness(1.5);
+}
+
+.arrow-btn-active {
+  filter: brightness(1.5);
+  background: linear-gradient(135deg, rgba(255, 213, 0, 0.4), rgba(255, 102, 0, 0.4));
+  border-color: #ffd500;
+  color: white;
+  box-shadow: 0 0 20px rgba(255, 213, 0, 0.6);
+  text-shadow: 0 0 8px #fff;
+}
+
+.time-add-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 200;
+}
+
+.time-add-frame {
+  display: flex;
+  padding: 30px;
+  border-radius: 25px;
+}
+
+.time-add-reel {
+  width: 200px;
+  height: 200px;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 10rem;
+  font-weight: 900;
+  color: #00d4ff;
+  text-shadow: 0 0 10px #00d4ff;
+  user-select: none;
+}
+
+/* Spinning Animation */
+.time-add-strip {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  user-select: none;
+}
+
+.time-add-wrapper {
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.time-add-is-spinning {
+  animation: time-add-rapid-scroll 0.5s linear infinite;
+}
+
+.time-add-landed {
+  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@keyframes time-add-rapid-scroll {
+  from { transform: translateY(-3800px); }
+  to { transform: translateY(-200px); }
+}
+
+/* The Animation */
+@keyframes flash-acknowledgement {
+  0% { filter: brightness(1); transform: translateY(-50%) scale(1); }
+  50% { filter: brightness(2.5); transform: translateY(-50%) scale(1.1); box-shadow: 0 0 30px rgba(255, 255, 255, 0.8); }
+  100% { filter: brightness(1); transform: translateY(-50%) scale(1); }
+}
+
+/* The Utility Class */
+.is-flashing {
+  animation: flash-acknowledgement 0.5s ease-out;
+}
+
+@keyframes flash-steady-blue {
+  0% { 
+    background-color: rgba(51, 51, 51, 0.9); 
+    box-shadow: 0 0 0px rgba(0, 102, 255, 0); 
+    border-color: #555;
+  }
+  50% { 
+    /* This creates the blue pulse */
+    background-color: rgba(0, 102, 255, 0.3); 
+    box-shadow: 0 0 20px rgba(0, 102, 255, 0.6); 
+    border-color: #00d4ff;
+  }
+  100% { 
+    background-color: rgba(51, 51, 51, 0.9); 
+    box-shadow: 0 0 0px rgba(0, 102, 255, 0); 
+    border-color: #555;
+  }
+}
+
+.timer-box.is-flashing {
+  animation: flash-steady-blue 0.5s ease-out;
 }
