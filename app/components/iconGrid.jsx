@@ -5,7 +5,7 @@ import '../../styles/iconGrid.css';
 /* 
   Takes provided icons and returns them in grid formation
 */
-export default function IconGrid({num, returnToMenu, slots, time}){
+export default function IconGrid({num, slots, time}){
   const [iconList, setIconList] = useState([]);
   const [gameOver, setGameOver] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
@@ -20,9 +20,9 @@ export default function IconGrid({num, returnToMenu, slots, time}){
   const [timerOffsets, setTimerOffsets] = useState([0, 0]);
   const [arrow, setArrow] = useState(3);
   const [isArrowActive, setIsArrowActive] = useState(false);
+  const [points, setPoints] = useState(1000);
+  const [isUserShuffle, setIsUserShuffle] = useState(false);
   const dragItem = useRef(null);
-  
-
   const timerRoll = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
   
   useEffect(() => {
@@ -129,7 +129,7 @@ export default function IconGrid({num, returnToMenu, slots, time}){
   }, [timeLeft, gameOver, isCountingDown, isReshuffling, isTimePotionUsed]);
 
   useEffect(() => {
-      const timer = setTimeout(() => setIsReshuffling(false), 1500);
+      const timer = setTimeout(() => (setIsReshuffling(false), setIsUserShuffle(false)), 1500);
       return () => clearTimeout(timer);
   }, [isReshuffling]);
 
@@ -512,33 +512,20 @@ export default function IconGrid({num, returnToMenu, slots, time}){
         indexes.push(item2.grid, item1.grid);
       }
     }
-
-    console.log(`Before Special`);
-    indexes.forEach((item, index) => {
-      console.log(`${index}: ${item}`);
-    });
     
     if(indexes.length == 0 && (item1.isSlot && item2.isSlot) && !isCenterSquare){
       indexes.push(item2.grid, item1.grid);
     } else if(indexes.length == 0 && !isCenterSquare && isArrowActive){
       indexes.push(item2.grid, item1.grid);
-      console.log("Arrow Used");
       setIsArrowActive(false);
       setArrow(prev => prev - 1);
     } else if(indexes.length != 0 && (item1.isSpecial || item2.isSpecial)){
       if(item1.isSpecial){
-        console.log("Item 1 Special");
         indexes.push(item2.grid);
       } else{
-        console.log("Item 2 Special");
         indexes.push(item1.grid);
       }
     }
-
-    console.log(`After Special`);
-    indexes.forEach((item, index) => {
-      console.log(`${index}: ${item}`);
-    });
 
     return indexes;
   }
@@ -597,7 +584,6 @@ export default function IconGrid({num, returnToMenu, slots, time}){
  
       for(let i = 0; i < newIndexes.length - 1; i++){
         if(!tempIconList[newIndexes[i]].isSlot){
-          console.log(`Not slot match: ${tempIconList[newIndexes[i]].type}`);
           isSlotMatch = false;
           break;
         }
@@ -761,7 +747,6 @@ export default function IconGrid({num, returnToMenu, slots, time}){
       }, 300);
 
     } else if(isCenterMove) {
-      console.log("Center");
       // If the match includes the center, only clear the center and make the rest fall
       tempIconList[indexes[0]] = { ...tempIconList[indexes[0]], isNewSlot: true, isSlotFilled: true };
       tempIconList[indexes[1]] = { ...tempIconList[indexes[1]], type: null, src: "/icons/error.png" };
@@ -962,12 +947,10 @@ export default function IconGrid({num, returnToMenu, slots, time}){
     const TIME_POTION_MIN = 15;
     const TIME_POTION_MAX = 60;
 
-    if (timePotion > 0 && !gameOver && !isCountingDown && timeLeft === undefined) return;
-      console.log(`Timer Offset: ${timerOffsets}`);
+    if (timePotion > 0 && !gameOver && !isCountingDown && !isReshuffling && timeLeft === undefined) return;
       const addTime = Math.floor(Math.random() * (TIME_POTION_MAX - TIME_POTION_MIN + 1)) + TIME_POTION_MIN;
       const finalTime = timeLeft + addTime;
       const timeElement = document.querySelector('.timer-box');
-      console.log(`Add Time: ${addTime}`);
       const digits = addTime.toString().padStart(2, '0').split('').map(Number);
       const offsets = digits.map(d => -(d * 200) - 200);
       
@@ -989,31 +972,52 @@ export default function IconGrid({num, returnToMenu, slots, time}){
   };
 
   const useArrow = () => {
-    if (arrow > 0 && !gameOver && !isCountingDown) {
+    if (arrow > 0 && !gameOver && !isCountingDown && !isReshuffling) {
       isArrowActive ? setIsArrowActive(false) : setIsArrowActive(true);
     }
   };
 
+  const useReshuffle = () => {
+    if (points >= 1000 && !gameOver && !isCountingDown && !isReshuffling) {
+      setIsUserShuffle(true);
+      setIconList(currentBoard => reshuffleBoard(currentBoard));
+      setPoints(prev => prev - 1000);
+    }
+  };
+
   function triggerFlash(buttonElement) {
-  buttonElement.classList.add('is-flashing');
-  
-  setTimeout(() => {
-    buttonElement.classList.remove('is-flashing');
-  }, 500);
-}
+    buttonElement.classList.add('is-flashing');
+    
+    setTimeout(() => {
+      buttonElement.classList.remove('is-flashing');
+    }, 500);
+  }
 
   return (
     <div className="game-wrapper">
       <div className="ui-header">
-        <button className="time-potion-btn" onClick={useTimePotion} disabled={timePotion <= 0 || gameOver || isCountingDown}>
+        <button className="time-potion-btn" onClick={useTimePotion} disabled={timePotion <= 0 || gameOver || isCountingDown || isReshuffling}>
           <span><img src="/icons/Time_Potion_Icon.png" alt="Time Potion" /></span> Time Potion: ({timePotion})
         </button>
-        <button className={`arrow-btn ${isArrowActive ? 'arrow-btn-active' : ''}`} onClick={useArrow} disabled={arrow <= 0 || gameOver || isCountingDown}>
+        <button className={`arrow-btn ${isArrowActive ? 'arrow-btn-active' : ''}`} onClick={useArrow} disabled={arrow <= 0 || gameOver || isCountingDown || isReshuffling}>
           <span><img src="/icons/Arrow_Icon.png" alt="Arrow" /></span> Arrow: ({arrow})
         </button>
-        <div className={`timer-box ${timeLeft < 10 ? 'critical' : ''}`}>
-          <span className="label">TIME</span>
-          <span className="value">{timeLeft}s</span>
+        <button className={`reshuffle-btn`} onClick={useReshuffle} disabled={points < 1000 || gameOver || isCountingDown || isReshuffling}>
+          <span><img src="/icons/Reshuffle_Icon.png" alt="Reshuffle" /></span> Reshuffle: (1000pts)
+        </button>
+
+        <div className="stats-container">
+          <div className={`timer-box ${timeLeft < 10 ? 'critical' : ''}`}>
+            <span className="label">TIME</span>
+            <span className="value">{timeLeft}s</span>
+          </div>
+
+          <div className="spacer"></div>
+
+          <div className="points-box">
+            <span className="label">POINTS</span>
+            <span className="value">{('000000000'+points).slice(-9)}</span>
+          </div>
         </div>
       </div>
       <div 
@@ -1064,7 +1068,7 @@ export default function IconGrid({num, returnToMenu, slots, time}){
 
           {isReshuffling && (
             <div className="reshuffle-overlay">
-              <div className="reshuffle-text">{"No moves left.\nReshuffling..."}</div>
+              <div className="reshuffle-text">{`${isUserShuffle ? '' : 'No moves left\n'}Reshuffling...`}</div>
             </div>
           )}
 

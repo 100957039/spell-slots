@@ -1,4 +1,3 @@
-
 :root {
   --tile-size: 65px; 
 }
@@ -12,7 +11,6 @@
   width: 100%; 
   max-width: fit-content; 
   height: auto;
-  margin: 0 auto;
   position: relative;
   user-select: none;
 }
@@ -200,27 +198,86 @@
   user-select: none;
 }
 
-.timer-box {
-  background: rgba(51, 51, 51, 0.9);
-  color: white;
-  padding: 4px 15px;
-  border-radius: 20px; /* Rounded pill shape looks smaller */
-  border: 1px solid #555;
-  display: flex;
+.stats-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
   align-items: center;
-  gap: 8px;
-  min-width: unset; /* Let it shrink to content */
+  gap: 20px;
+  width: 90%;
+  max-width: 575px;
+  z-index: 100;
+  pointer-events: none;
   user-select: none;
 }
 
-.timer-box .label {
-  font-size: 10px;
+.timer-box {
+  background: linear-gradient(135deg, rgba(224, 224, 224, 0.1), rgba(140, 140, 140, 0.1));
+  border: 1px solid rgba(192, 192, 192, 0.4);
+  padding: 8px 16px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  
+  /* Visual depth */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  cursor: default;
+  user-select: none;
+  color: #e0e0e0;
+  text-transform: uppercase;
   letter-spacing: 1px;
+  font-weight: bold;
+  justify-self: start;
+  height: 50px; 
+  align-items: center;
+}
+
+.timer-box .label {
+  font-size: 14px;
+  margin-right: 10px;
 }
 
 .timer-box .value {
-  font-size: 18px; /* Smaller font */
-  font-family: monospace;
+  font-size: 18px;
+  font-family: 'Courier New', Courier, monospace;
+  color: #00d4ff; /* Using the Potion Blue for a tech-highlight */
+  text-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
+}
+
+.points-box {
+  background: linear-gradient(135deg, rgba(224, 224, 224, 0.1), rgba(140, 140, 140, 0.1));
+  border: 1px solid rgba(192, 192, 192, 0.4);
+  height: 50px; 
+  padding: 1px 10px 0 12px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  user-select: none;
+  color: #e0e0e0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: bold;
+  justify-content: space-between;
+  justify-self: end;
+  width: 200;
+  align-items: center;
+}
+
+.points-box .label {
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-right: 15px;
+}
+
+.points-box .value {
+  font-size: 18px;
+  font-family: 'Courier New', Courier, monospace;
+  color: #ffd500; 
+  text-shadow: 0 0 5px rgba(255, 213, 0, 0.5);
+  flex-grow: 1;
+  min-width: 60px;
+  display: inline-block;
 }
 
 .win-text { color: #ffd700; }
@@ -406,6 +463,51 @@
   text-shadow: 0 0 8px #fff;
 }
 
+.reshuffle-btn {
+  position: absolute;
+  left: 7px; 
+  top: calc(110px + 45px); 
+  transform: translateY(-50%); 
+  background: linear-gradient(135deg, rgba(181, 5, 238, 0.15), rgba(75, 0, 130, 0.3));
+  color: #d880ff;
+  border: 1px solid rgba(181, 5, 238, 0.5);
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  border-radius: 20px;
+  cursor: pointer;
+  z-index: 60;
+  box-shadow: 0 0 15px rgba(181, 5, 238, 0.3), inset 0 0 5px rgba(181, 5, 238, 0.2);
+  transition: all 0.3s ease;
+  user-select: none;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+}
+
+.reshuffle-btn img {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  margin-right: 8px;
+  object-fit: contain;
+}
+
+.reshuffle-btn:hover {
+  transform: translateY(-50%) scale(1.05); /* Slight grow on hover */
+  background: linear-gradient(135deg, rgba(181, 5, 238, 0.4), rgba(216, 128, 255, 0.2));
+  border-color: #b505ee; /* Solid accent color on hover */
+  color: white;
+  box-shadow: 0 0 25px rgba(181, 5, 238, 0.7), 0 0 10px rgba(255, 255, 255, 0.2);
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+}
+
+.reshuffle-btn:active {
+  filter: brightness(1.5);
+  transform: translateY(-50%) scale(0.95);
+}
+
 .time-add-overlay {
   position: absolute;
   top: 0;
@@ -440,7 +542,6 @@
   user-select: none;
 }
 
-/* Spinning Animation */
 .time-add-strip {
   display: flex;
   flex-direction: column;
@@ -474,7 +575,7 @@
   to { transform: translateY(-200px); }
 }
 
-/* The Animation */
+
 @keyframes flash-acknowledgement {
   0% { filter: brightness(1); transform: translateY(-50%) scale(1); }
   50% { filter: brightness(2.5); transform: translateY(-50%) scale(1.1); box-shadow: 0 0 30px rgba(255, 255, 255, 0.8); }

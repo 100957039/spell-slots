@@ -274,7 +274,7 @@ export default function Slot({num, returnToMenu, time}) {
           </div>
         )}
         {(stageSlot === 'playing' && stageTimer === 'playing') && (
-          <IconGrid num={num} returnToMenu={returnToMenu} slots={slotResults} time={timeResults} />
+          <IconGrid num={num} slots={slotResults} time={timeResults} />
         )}
       </div>
     </div>
