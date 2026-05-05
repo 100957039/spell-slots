@@ -165,20 +165,17 @@
 
 .game-wrapper {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start; 
-  height: 100vh;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 100vh;
   width: 100vw;
   box-sizing: border-box;
-  overflow: hidden;
-  gap: 5px; /* Tiny gap between header and board */
-  user-select: none;
+  position: relative
 }
 
 @media (max-height: 800px) {
   .container {
-    /* Scale down only when the screen gets too short for the new 65px tiles */
     transform: scale(0.85);
     transform-origin: top center;
     user-select: none;
@@ -189,25 +186,36 @@
   }
 }
 
-.ui-header {
-  padding-top: 20px;
+.main-game-area {
   display: flex;
-  justify-content: center;
-  width: 100%;
-  position: relative;
+  flex-direction: column;
+  align-items: center;
+  flex-grow: 1;
+  gap: 10px;
+}
+
+.ui-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start; 
+  min-height: min-content;
+  width: fit-content;
+  box-sizing: border-box;
+  overflow: hidden;
   user-select: none;
 }
 
 .stats-container {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 75px 1fr;
   align-items: center;
-  gap: 20px;
-  width: 90%;
-  max-width: 575px;
+  width: 100%;
+  max-width: fit-content;
   z-index: 100;
   pointer-events: none;
   user-select: none;
+  padding-top: 20px;
 }
 
 .timer-box {
@@ -248,7 +256,7 @@
   background: linear-gradient(135deg, rgba(224, 224, 224, 0.1), rgba(140, 140, 140, 0.1));
   border: 1px solid rgba(192, 192, 192, 0.4);
   height: 50px; 
-  padding: 1px 10px 0 12px;
+  padding: 10px 20px;
   border-radius: 20px;
   display: flex;
   align-items: center;
@@ -260,7 +268,7 @@
   font-weight: bold;
   justify-content: space-between;
   justify-self: end;
-  width: 200;
+  width: 250;
   align-items: center;
 }
 
@@ -278,6 +286,23 @@
   flex-grow: 1;
   min-width: 60px;
   display: inline-block;
+  letter-spacing: 4px;
+}
+
+/* The animation definition */
+@keyframes pulse-gold {
+  0% { transform: scale(1); text-shadow: 0 0 5px rgba(255, 213, 0, 0.5); }
+  50% { transform: scale(1.2); text-shadow: 0 0 15px rgba(255, 213, 0, 1); }
+  100% { transform: scale(1); text-shadow: 0 0 5px rgba(255, 213, 0, 0.5); }
+}
+
+.animate-bump {
+  animation: pulse-gold 0.3s ease-out;
+}
+
+.points-box .value {
+  display: inline-block; 
+  transition: color 0.3s;
 }
 
 .win-text { color: #ffd700; }
@@ -363,10 +388,17 @@
   100% { transform: scale(1.5); opacity: 0; }
 }
 
-.time-potion-btn {
+.side-controls {
   position: absolute;
-  left: 7px; 
-  top: calc(30px + 35px); 
+  left: 10px;
+  top: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 50;
+}
+
+.time-potion-btn {
   transform: translateY(-50%); 
   background: linear-gradient(135deg, rgba(0, 102, 255, 0.2), rgba(153, 0, 255, 0.2));
   color: #00d4ff;
@@ -409,9 +441,6 @@
 }
 
 .arrow-btn {
-  position: absolute;
-  left: 7px; 
-  top: calc(65px + 45px); 
   transform: translateY(-50%); 
   background: linear-gradient(135deg, rgba(255, 213, 0, 0.4), rgba(255, 196, 0, 0.2));
   color: #ffd500;
@@ -464,9 +493,6 @@
 }
 
 .reshuffle-btn {
-  position: absolute;
-  left: 7px; 
-  top: calc(110px + 45px); 
   transform: translateY(-50%); 
   background: linear-gradient(135deg, rgba(181, 5, 238, 0.15), rgba(75, 0, 130, 0.3));
   color: #d880ff;
@@ -574,7 +600,6 @@
   from { transform: translateY(-3800px); }
   to { transform: translateY(-200px); }
 }
-
 
 @keyframes flash-acknowledgement {
   0% { filter: brightness(1); transform: translateY(-50%) scale(1); }

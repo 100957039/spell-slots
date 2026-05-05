@@ -15,12 +15,12 @@ export default function IconGrid({num, slots, time}){
   const [countdown, setCountdown] = useState(3);
   const [isReshuffling, setIsReshuffling] = useState(false);
   const [isTimePotionUsed, setIsTimePotionUsed] = useState(false);
-  const [timePotion, setTimePotion] = useState(3);
+  const [timePotion, setTimePotion] = useState(1);
   const [isLooping, setIsLooping] = useState(false);
   const [timerOffsets, setTimerOffsets] = useState([0, 0]);
-  const [arrow, setArrow] = useState(3);
+  const [arrow, setArrow] = useState(1);
   const [isArrowActive, setIsArrowActive] = useState(false);
-  const [points, setPoints] = useState(1000);
+  const [points, setPoints] = useState(0);
   const [isUserShuffle, setIsUserShuffle] = useState(false);
   const dragItem = useRef(null);
   const timerRoll = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
@@ -133,7 +133,7 @@ export default function IconGrid({num, slots, time}){
       return () => clearTimeout(timer);
   }, [isReshuffling]);
 
-  function genRandIcon(index, excludeType, genSlotIcon = false, genOnlyNormalIcon = false) {
+  function genRandIcon(index, excludeType, genSlotIcon = false, genWinIcon = false, genOnlyNormalIcon = false) {
     const iconChance = genOnlyNormalIcon ? 95 : 100;
     const SPECIAL_ICON_CHANCE = 100;
     const specialIcon = Math.floor(Math.random() * SPECIAL_ICON_CHANCE);
@@ -151,7 +151,7 @@ export default function IconGrid({num, slots, time}){
     }
     let iconType;
 
-    if(!genSlotIcon && !genOnlyNormalIcon && specialIcon > 97){
+    if(!genSlotIcon && !genOnlyNormalIcon && !genWinIcon && specialIcon > 97){
       if(specialIcon > 98){
         // Time Potion
         icon = {
@@ -182,7 +182,7 @@ export default function IconGrid({num, slots, time}){
       return icon;
     }
 
-    if(genSlotIcon){
+    if(genSlotIcon || genWinIcon){
       iconType = 100;
     } else {
       iconType = Math.floor(Math.random() * iconChance);
@@ -347,8 +347,22 @@ export default function IconGrid({num, slots, time}){
         }
       }
     }
+
+    let isWinIcon = false;
+
+    if(genWinIcon){
+      for (const winIcon of slots) {
+        if (winIcon.type === icon.type) {
+          isWinIcon = true;
+          break; 
+        } 
+      }
+    }
+    
     if(icon.type == excludeType){
       icon = genRandIcon(icon.grid, excludeType, genSlotIcon);
+    } else if(genWinIcon && !isWinIcon){
+      icon = genRandIcon(icon.grid, excludeType, genSlotIcon, genWinIcon);
     }
 
     return icon;
@@ -542,6 +556,7 @@ export default function IconGrid({num, slots, time}){
     const TIME_POTION_TYPE = 'time';
     const isCenterMove = indexes.some(r=> centerIndexes.includes(r));
     let isSpecialMatch = false;
+    let pointTotal = 0;
 
     // If move was between 2 slot icons, stop processing
     if(indexes.length >= BASIC_MATCH){
@@ -575,6 +590,7 @@ export default function IconGrid({num, slots, time}){
           buttonElement = document.querySelector('.arrow-btn');
         }
         triggerFlash(buttonElement);
+        pointTotal += 300;
       }
 
 
@@ -599,12 +615,22 @@ export default function IconGrid({num, slots, time}){
         // If it's a slot match, generate a new slot that's not the same type
         const newSlot = genRandIcon(newIndexes[0], slotType, true);
         tempIconList[newIndexes[0]] = {...newSlot, isNewSlot: true};
+        pointTotal += 200;
       
-      // If it's a regular big match 
+      // If it's a 5+ icon match
+      } else if(newIndexes.length > BASIC_MATCH + 1 && !isSpecialMatch || newIndexes.length > (BASIC_MATCH + 2)) {
+        const newSlot = genRandIcon(newIndexes[0], "", true, true);
+        tempIconList[newIndexes[0]] = {...newSlot, isNewSlot: true};
+        pointTotal += 400;
+      // If it's a 4 icon match
       } else if(newIndexes.length > BASIC_MATCH && !isSpecialMatch || newIndexes.length > (BASIC_MATCH + 1)) {
         const newSlot = genRandIcon(newIndexes[0], "", true);
         tempIconList[newIndexes[0]] = {...newSlot, isNewSlot: true};
+        pointTotal += 200;
       }
+
+      // Add 100 points for making any kind of match
+      pointTotal += 100;
 
       // Go through each row of the board
       for (let col = 0; col < gridNumber; col++) {
@@ -737,7 +763,11 @@ export default function IconGrid({num, slots, time}){
             isFalling: hasMoved || targetIcon.isFalling
           };
         });
-      }    
+      } 
+      
+      // Update point count
+      console.log(`Points from move: ${pointTotal}`);
+      updatePoints(pointTotal);
 
       // Resets falling animation
       setTimeout(() => {
@@ -796,6 +826,10 @@ export default function IconGrid({num, slots, time}){
           isFalling: hasMoved || targetIcon.isFalling
         };
       }); 
+
+      // Add 1000 points for filling a center slot
+      console.log(`Center Filled!`);
+      updatePoints(1000);
 
       // Resets falling animation
       setTimeout(() => {
@@ -938,6 +972,7 @@ export default function IconGrid({num, slots, time}){
       tempBoard[centerSquare + 1].type == slots[3].type &&
       tempBoard[centerSquare + 2].type == slots[4].type
     ){
+      updatePoints(10000);
       return true;
     }
     return false;
@@ -978,10 +1013,10 @@ export default function IconGrid({num, slots, time}){
   };
 
   const useReshuffle = () => {
-    if (points >= 1000 && !gameOver && !isCountingDown && !isReshuffling) {
+    if (points >= 5000 && !gameOver && !isCountingDown && !isReshuffling) {
       setIsUserShuffle(true);
       setIconList(currentBoard => reshuffleBoard(currentBoard));
-      setPoints(prev => prev - 1000);
+      setPoints(prev => prev - 5000);
     }
   };
 
@@ -993,133 +1028,147 @@ export default function IconGrid({num, slots, time}){
     }, 500);
   }
 
+  function updatePoints(newPoints) {
+    const pointsElement = document.querySelector('.points-box .value');
+    setPoints(prev => prev + newPoints);
+
+    pointsElement.classList.remove('animate-bump');
+    void pointsElement.offsetWidth;
+    pointsElement.classList.add('animate-bump');
+  }
+
   return (
     <div className="game-wrapper">
-      <div className="ui-header">
-        <button className="time-potion-btn" onClick={useTimePotion} disabled={timePotion <= 0 || gameOver || isCountingDown || isReshuffling}>
+      <div className="side-controls">
+        <button className="time-potion-btn" onClick={useTimePotion} disabled={timePotion <= 0 || gameOver || isCountingDown || isReshuffling || isLooping}>
           <span><img src="/icons/Time_Potion_Icon.png" alt="Time Potion" /></span> Time Potion: ({timePotion})
         </button>
-        <button className={`arrow-btn ${isArrowActive ? 'arrow-btn-active' : ''}`} onClick={useArrow} disabled={arrow <= 0 || gameOver || isCountingDown || isReshuffling}>
+        <button className={`arrow-btn ${isArrowActive ? 'arrow-btn-active' : ''}`} onClick={useArrow} disabled={arrow <= 0 || gameOver || isCountingDown || isReshuffling || isLooping}>
           <span><img src="/icons/Arrow_Icon.png" alt="Arrow" /></span> Arrow: ({arrow})
         </button>
-        <button className={`reshuffle-btn`} onClick={useReshuffle} disabled={points < 1000 || gameOver || isCountingDown || isReshuffling}>
-          <span><img src="/icons/Reshuffle_Icon.png" alt="Reshuffle" /></span> Reshuffle: (1000pts)
+        <button className={`reshuffle-btn`} onClick={useReshuffle} disabled={points < 1000 || gameOver || isCountingDown || isReshuffling || isLooping}>
+          <span><img src="/icons/Reshuffle_Icon.png" alt="Reshuffle" /></span> Reshuffle: (5000pts)
         </button>
+      </div>
 
-        <div className="stats-container">
-          <div className={`timer-box ${timeLeft < 10 ? 'critical' : ''}`}>
-            <span className="label">TIME</span>
-            <span className="value">{timeLeft}s</span>
-          </div>
+      <div className="main-game-area">
+        <div className="ui-header">
+          <div className="stats-container">
+            <div className={`timer-box ${timeLeft < 10 ? 'critical' : ''}`}>
+              <span className="label">TIME</span>
+              <span className="value">{timeLeft}s</span>
+            </div>
 
-          <div className="spacer"></div>
+            <div className="spacer"></div>
 
-          <div className="points-box">
-            <span className="label">POINTS</span>
-            <span className="value">{('000000000'+points).slice(-9)}</span>
+            <div className="points-box">
+              <span className="label">POINTS</span>
+              <span className="value">{('000000000'+points).slice(-9)}</span>
+            </div>
           </div>
         </div>
-      </div>
-      <div 
-        className='container' 
-        style={{ 
-          display: 'grid',
-          gridTemplateColumns: `repeat(${num}, var(--tile-size))`,
-          gridTemplateRows: `repeat(${num}, var(--tile-size))` 
-        }}
-      >
-        {iconList.map((icon) => {
-          const centerSquare = (num * (num-1)) + (Math.floor(num/2));
-          const isCenterSquare = (icon.grid == (centerSquare - 2)) || (icon.grid == (centerSquare - 1)) || (icon.grid == centerSquare) || (icon.grid == (centerSquare + 1)) || (icon.grid == (centerSquare + 2));
 
-          const shouldShow = !isCountingDown || isCenterSquare;
+        <div 
+          className='container' 
+          style={{ 
+            display: 'grid',
+            gridTemplateColumns: `repeat(${num}, var(--tile-size))`,
+            gridTemplateRows: `repeat(${num}, var(--tile-size))` 
+          }}
+        >
+          {iconList.map((icon) => {
+            const centerSquare = (num * (num-1)) + (Math.floor(num/2));
+            const isCenterSquare = (icon.grid == (centerSquare - 2)) || (icon.grid == (centerSquare - 1)) || (icon.grid == centerSquare) || (icon.grid == (centerSquare + 1)) || (icon.grid == (centerSquare + 2));
 
-          return (
-            <div key={icon.id} className={`tile ${isCenterSquare ? 'centerZone' : ''}`}>
-              {shouldShow && (
-                <img
-                  id={icon.id}
-                  src={icon.src}
-                  grid={icon.grid}
-                  type={icon.type}
-                  isslot={(icon.isSlot ?? false).toString()}
-                  draggable={!isCenterSquare ? "true" : false}
-                  onDragStart={!isCountingDown ? dragstartHandler : undefined}
-                  onDragEnd={!isCountingDown ? dragEndHandler : undefined}
-                  onDrop={!isCountingDown ? dropHandler : undefined}
-                  onDragOver={!isCountingDown ? dragoverHandler : undefined}
-                  className={`
-                    ${!isCenterSquare ? 'icon' : 'centerIcon'} 
-                    ${icon.isSlot ? 'isSlot' : ''} 
-                    ${icon.isFalling ? 'iconFalling' : ''} 
-                    ${icon.isNewSlot ? 'iconPopForward' : ''}
-                    ${isCenterSquare && !icon.isSlotFilled ? 'isEmpty' : ''}
-                  `}
-                />
-              )}
-            </div>
-          );
-        })}
-          {isCountingDown && (
-            <div className="countdown-overlay">
-              <div className="countdown-number">{countdown > 0 ? countdown : "GO!"}</div>
-            </div>
-          )}
+            const shouldShow = !isCountingDown || isCenterSquare;
 
-          {isReshuffling && (
-            <div className="reshuffle-overlay">
-              <div className="reshuffle-text">{`${isUserShuffle ? '' : 'No moves left\n'}Reshuffling...`}</div>
-            </div>
-          )}
+            return (
+              <div key={icon.id} className={`tile ${isCenterSquare ? 'centerZone' : ''}`}>
+                {shouldShow && (
+                  <img
+                    id={icon.id}
+                    src={icon.src}
+                    grid={icon.grid}
+                    type={icon.type}
+                    isslot={(icon.isSlot ?? false).toString()}
+                    draggable={!isCenterSquare ? "true" : false}
+                    onDragStart={!isCountingDown ? dragstartHandler : undefined}
+                    onDragEnd={!isCountingDown ? dragEndHandler : undefined}
+                    onDrop={!isCountingDown ? dropHandler : undefined}
+                    onDragOver={!isCountingDown ? dragoverHandler : undefined}
+                    className={`
+                      ${!isCenterSquare ? 'icon' : 'centerIcon'} 
+                      ${icon.isSlot ? 'isSlot' : ''} 
+                      ${icon.isFalling ? 'iconFalling' : ''} 
+                      ${icon.isNewSlot ? 'iconPopForward' : ''}
+                      ${isCenterSquare && !icon.isSlotFilled ? 'isEmpty' : ''}
+                    `}
+                  />
+                )}
+              </div>
+            );
+          })}
+            {isCountingDown && (
+              <div className="countdown-overlay">
+                <div className="countdown-number">{countdown > 0 ? countdown : "GO!"}</div>
+              </div>
+            )}
 
-          {isTimePotionUsed && (
-            <div className="time-add-overlay">
-              <div className="time-add-frame">
-                {[0, 1].map((i) => (
-                  <div key={i} className="time-add-reel" draggable="false">
-                    <div 
-                      className={`time-add-strip ${isLooping ? 'time-add-is-spinning' : 'time-add-landed'}`}
-                      style={{ 
-                        animationDelay: `${i * 80}ms`, 
-                        transform: !isLooping ? `translateY(${timerOffsets[i]}px)` : 'none',
-                      }}
-                    >
-                      <div className="time-add-wrapper" draggable="false">
-                        <div>{timeDisplay[i] ?? 0}</div>
-                      </div>
-                      {[...timerRoll, ...timerRoll].map((number, idx) => (
-                        <div key={idx} className="time-add-wrapper" draggable="false">
-                          <div>{number}</div>
+            {isReshuffling && (
+              <div className="reshuffle-overlay">
+                <div className="reshuffle-text">{`${isUserShuffle ? '' : 'No moves left\n'}Reshuffling...`}</div>
+              </div>
+            )}
+
+            {isTimePotionUsed && (
+              <div className="time-add-overlay">
+                <div className="time-add-frame">
+                  {[0, 1].map((i) => (
+                    <div key={i} className="time-add-reel" draggable="false">
+                      <div 
+                        className={`time-add-strip ${isLooping ? 'time-add-is-spinning' : 'time-add-landed'}`}
+                        style={{ 
+                          animationDelay: `${i * 80}ms`, 
+                          transform: !isLooping ? `translateY(${timerOffsets[i]}px)` : 'none',
+                        }}
+                      >
+                        <div className="time-add-wrapper" draggable="false">
+                          <div>{timeDisplay[i] ?? 0}</div>
                         </div>
-                      ))}
-                      <div className="time-add-wrapper" draggable="false">
-                        <div>{timeDisplay[i] ?? 0}</div>
+                        {[...timerRoll, ...timerRoll].map((number, idx) => (
+                          <div key={idx} className="time-add-wrapper" draggable="false">
+                            <div>{number}</div>
+                          </div>
+                        ))}
+                        <div className="time-add-wrapper" draggable="false">
+                          <div>{timeDisplay[i] ?? 0}</div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {gameOver && (
+            <div className="overlay">
+              <div className="modal">
+                {timeLeft > 0 ? (
+                  <>
+                    <h1 className="win-text">JACKPOT!</h1>
+                    <p>You matched the center slots!</p>
+                  </>
+                ) : (
+                  <>
+                    <h1 className="loss-text">TIME UP!</h1>
+                    <p>Better luck next time.</p>
+                  </>
+                )}
+                <button className="retry-btn" onClick={() => window.location.reload()}>Play Again</button>
               </div>
             </div>
           )}
-
-          {gameOver && (
-          <div className="overlay">
-            <div className="modal">
-              {timeLeft > 0 ? (
-                <>
-                  <h1 className="win-text">JACKPOT!</h1>
-                  <p>You matched the center slots!</p>
-                </>
-              ) : (
-                <>
-                  <h1 className="loss-text">TIME UP!</h1>
-                  <p>Better luck next time.</p>
-                </>
-              )}
-              <button className="retry-btn" onClick={() => window.location.reload()}>Play Again</button>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );
