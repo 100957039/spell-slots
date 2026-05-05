@@ -15,10 +15,10 @@ export default function IconGrid({num, returnToMenu, slots, time}){
   const [countdown, setCountdown] = useState(3);
   const [isReshuffling, setIsReshuffling] = useState(false);
   const [isTimePotionUsed, setIsTimePotionUsed] = useState(false);
-  const [timePotion, setTimePotion] = useState(10);
+  const [timePotion, setTimePotion] = useState(3);
   const [isLooping, setIsLooping] = useState(false);
   const [timerOffsets, setTimerOffsets] = useState([0, 0]);
-  const [arrow, setArrow] = useState(10);
+  const [arrow, setArrow] = useState(3);
   const [isArrowActive, setIsArrowActive] = useState(false);
   const dragItem = useRef(null);
   
@@ -364,7 +364,7 @@ export default function IconGrid({num, returnToMenu, slots, time}){
       [CHECK_HORIZONTAL, (CHECK_HORIZONTAL*2)],
       [checkDiagonal, (checkDiagonal*2)]
     ];
-    
+
     const indexX = currentIndex % num;
     const indexY = Math.floor(currentIndex / num);
     const requireCheck = [
