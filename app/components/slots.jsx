@@ -4,8 +4,8 @@ import IconGrid from "./iconGrid";
 import '../../styles/slots.css';
 
 export default function Slot({num, returnToMenu, time}) {
-  const MIN_TIME = 999;
-  const MAX_TIME = 999;
+  const MIN_TIME = 300;
+  const MAX_TIME = 500;
   const [stage, setStage] = useState('idle');  
   const slotRoll = [
     {
@@ -159,91 +159,96 @@ export default function Slot({num, returnToMenu, time}) {
   }
 
   return (
-    <div className="h-screen w-screen flex flex-col items-center justify-center">
-      
-      {(stage === 'idle' || stage === 'spinning' || stage === 'landed') && (
-        <div className="flex flex-col items-center gap-8">
-          <div className="ready-text-container">
-            <h1 className="ready-text">READY TO SPIN?</h1>
-          </div>
-
-          <div className="timer-reel-frame">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="timer-reel" draggable="false">
-                <div 
-                  className={`timer-strip 
-                    ${isLooping ? 'timer-is-spinning' : ''} 
-                    ${stage === 'spinning' && !isLooping ? 'timer-is-landing' : ''}
-                    `
-                  }
-                  style={{ 
-                    animationDelay: `${i * 80}ms`, 
-                    transform: !isLooping ? `translateY(${timerOffsets[i]}px)` : undefined,
-                    transition: !isLooping ? 'transform 0.5s ease-out' : 'none'
-                }}
-                >
-                  <div className="timer-wrapper" draggable="false">
-                    <div>{timeDisplay[i]}</div>
-                  </div>
-                  {[...timerRoll, ...timerRoll, ...timerRoll].map((number, idx) => (
-                    <div key={idx} className="timer-wrapper" draggable="false">
-                      <div>{number}</div>
-                    </div>
-                  ))}
-                  <div className="timer-wrapper" draggable="false">
-                    <div>{timeDisplay[i]}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
+    <div>
+      <button className="back-to-menu-btn" onClick={returnToMenu}>
+        <span>☰</span> Menu
+      </button>
+      <div className="h-screen w-screen flex flex-col items-center justify-center">
+        
+        {(stage === 'idle' || stage === 'spinning' || stage === 'landed') && (
+          <div className="flex flex-col items-center gap-8">
+            <div className="ready-text-container">
+              <h1 className="ready-text">READY TO SPIN?</h1>
             </div>
 
-          <div className="flex flex-row items-center gap-8 bg-[#0a0a0a] p-6 rounded-3xl border-4 border-[#222] shadow-2xl">
-            <div className="slot-reel-frame">
-            {[0, 1, 2, 3, 4].map((i) => (
-              <div key={i} className="reel" draggable="false">
-                <div 
-                  className={`reel-strip 
-                    ${isLooping ? 'is-spinning' : ''} 
-                    ${stage === 'spinning' && !isLooping ? 'is-landing' : ''}
-                    `
-                  }
-                  style={{ 
-                    animationDelay: `${i * 80}ms`, 
-                    transitionDelay: `${i * 150}ms` 
+            <div className="timer-reel-frame">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="timer-reel" draggable="false">
+                  <div 
+                    className={`timer-strip 
+                      ${isLooping ? 'timer-is-spinning' : ''} 
+                      ${stage === 'spinning' && !isLooping ? 'timer-is-landing' : ''}
+                      `
+                    }
+                    style={{ 
+                      animationDelay: `${i * 80}ms`, 
+                      transform: !isLooping ? `translateY(${timerOffsets[i]}px)` : undefined,
+                      transition: !isLooping ? 'transform 0.5s ease-out' : 'none'
                   }}
-                >
-                  <div className="icon-wrapper" draggable="false">
-                    <img src={slotResults[i]?.src} className="slot-display-icon" alt="result" draggable="false"/>
-                  </div>
-                  {[...slotRoll, ...slotRoll, ...slotRoll, ...slotRoll, ...slotRoll].map((icon, idx) => (
-                    <div key={idx} className="icon-wrapper" draggable="false">
-                      <img src={icon.src} className="slot-display-icon" alt="filler" draggable="false"/>
+                  >
+                    <div className="timer-wrapper" draggable="false">
+                      <div>{timeDisplay[i]}</div>
                     </div>
-                  ))}
-                  <div className="icon-wrapper" draggable="false">
-                    <img src={slotResults[i]?.src} className="slot-display-icon" alt="start" draggable="false" />
+                    {[...timerRoll, ...timerRoll, ...timerRoll].map((number, idx) => (
+                      <div key={idx} className="timer-wrapper" draggable="false">
+                        <div>{number}</div>
+                      </div>
+                    ))}
+                    <div className="timer-wrapper" draggable="false">
+                      <div>{timeDisplay[i]}</div>
+                    </div>
                   </div>
                 </div>
+              ))}
               </div>
-            ))}
-            </div>
 
-            <div className="flex items-center justify-center">
-              <button 
-                className={`spin-button ${stage !== 'idle' ? 'button-disabled' : ''}`} 
-                onClick={stage === 'idle' ? handleSpin : undefined}
-                disabled={stage !== 'idle'}
-              >
-                SPIN
-              </button>
+            <div className="flex flex-row items-center gap-8 bg-[#0a0a0a] p-6 rounded-3xl border-4 border-[#222] shadow-2xl">
+              <div className="slot-reel-frame">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <div key={i} className="reel" draggable="false">
+                  <div 
+                    className={`reel-strip 
+                      ${isLooping ? 'is-spinning' : ''} 
+                      ${stage === 'spinning' && !isLooping ? 'is-landing' : ''}
+                      `
+                    }
+                    style={{ 
+                      animationDelay: `${i * 80}ms`, 
+                      transitionDelay: `${i * 150}ms` 
+                    }}
+                  >
+                    <div className="icon-wrapper" draggable="false">
+                      <img src={slotResults[i]?.src} className="slot-display-icon" alt="result" draggable="false"/>
+                    </div>
+                    {[...slotRoll, ...slotRoll, ...slotRoll, ...slotRoll, ...slotRoll].map((icon, idx) => (
+                      <div key={idx} className="icon-wrapper" draggable="false">
+                        <img src={icon.src} className="slot-display-icon" alt="filler" draggable="false"/>
+                      </div>
+                    ))}
+                    <div className="icon-wrapper" draggable="false">
+                      <img src={slotResults[i]?.src} className="slot-display-icon" alt="start" draggable="false" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              </div>
+
+              <div className="flex items-center justify-center">
+                <button 
+                  className={`spin-button ${stage !== 'idle' ? 'button-disabled' : ''}`} 
+                  onClick={stage === 'idle' ? handleSpin : undefined}
+                  disabled={stage !== 'idle'}
+                >
+                  SPIN
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      {stage === 'playing' && (
-        <IconGrid num={num} returnToMenu={returnToMenu} slots={slotResults} time={timeResults} />
-      )}
+        )}
+        {stage === 'playing' && (
+          <IconGrid num={num} returnToMenu={returnToMenu} slots={slotResults} time={timeResults} />
+        )}
+      </div>
     </div>
   );
 }

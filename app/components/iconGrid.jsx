@@ -357,11 +357,14 @@ export default function IconGrid({num, returnToMenu, slots, time}){
   function checkInitialMatches (currentIndex, type, boardToCheck){
     const checkVertical = num;
     const CHECK_HORIZONTAL = 1;
+    const checkDiagonal = checkVertical + CHECK_HORIZONTAL;
     const MIN_COORD = 1;
     const checkList = [
       [checkVertical, (checkVertical*2)],
-      [CHECK_HORIZONTAL, (CHECK_HORIZONTAL*2)]
+      [CHECK_HORIZONTAL, (CHECK_HORIZONTAL*2)],
+      [checkDiagonal, (checkDiagonal*2)]
     ];
+    
     const indexX = currentIndex % num;
     const indexY = Math.floor(currentIndex / num);
     const requireCheck = [
@@ -563,19 +566,18 @@ export default function IconGrid({num, returnToMenu, slots, time}){
         }
       }
 
+      // Return if not a full match
       if(newIndexes.length < BASIC_MATCH){
         return tempIconList;
       }
 
+      // Check if a special index was included in the match
       const lastIndex = newIndexes.length - 1;
-      console.log(`Last Index: ${lastIndex}`);
-      console.log(`Special Icon: ${tempBoard[newIndexes[lastIndex]].type}`);
 
       if(tempBoard[newIndexes[lastIndex]].isSpecial){
         const specialIconType = tempBoard[newIndexes[lastIndex]].type;
         isSpecialMatch = true;
         
-        console.log(`Special Icon type: ${specialIconType}`);
         let buttonElement;
 
         if(specialIconType == TIME_POTION_TYPE){
@@ -588,10 +590,11 @@ export default function IconGrid({num, returnToMenu, slots, time}){
         triggerFlash(buttonElement);
       }
 
-      let isSlotMatch = true;
-      const slotType = tempIconList[newIndexes[0]].type;
 
       // Check if the match is a slot match
+      let isSlotMatch = true;
+      const slotType = tempIconList[newIndexes[0]].type;
+ 
       for(let i = 0; i < newIndexes.length - 1; i++){
         if(!tempIconList[newIndexes[i]].isSlot){
           console.log(`Not slot match: ${tempIconList[newIndexes[i]].type}`);
@@ -608,9 +611,10 @@ export default function IconGrid({num, returnToMenu, slots, time}){
       // If matching above basic, make moved icon a slot symbol
       if (isSlotMatch){
         // If it's a slot match, generate a new slot that's not the same type
-        console.log(`Slot Match: ${slotType}`);
         const newSlot = genRandIcon(newIndexes[0], slotType, true);
         tempIconList[newIndexes[0]] = {...newSlot, isNewSlot: true};
+      
+      // If it's a regular big match 
       } else if(newIndexes.length > BASIC_MATCH && !isSpecialMatch || newIndexes.length > (BASIC_MATCH + 1)) {
         const newSlot = genRandIcon(newIndexes[0], "", true);
         tempIconList[newIndexes[0]] = {...newSlot, isNewSlot: true};
@@ -1001,9 +1005,6 @@ export default function IconGrid({num, returnToMenu, slots, time}){
   return (
     <div className="game-wrapper">
       <div className="ui-header">
-        <button className="back-to-menu-btn" onClick={returnToMenu}>
-          <span>☰</span> Menu
-        </button>
         <button className="time-potion-btn" onClick={useTimePotion} disabled={timePotion <= 0 || gameOver || isCountingDown}>
           <span><img src="/icons/Time_Potion_Icon.png" alt="Time Potion" /></span> Time Potion: ({timePotion})
         </button>

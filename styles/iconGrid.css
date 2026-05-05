@@ -306,66 +306,20 @@
   100% { transform: scale(1.5); opacity: 0; }
 }
 
-.back-to-menu-btn {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  /* This is the anchor that keeps it centered */
-  transform: translateY(-50%); 
-  
-  background: rgba(255, 255, 255, 0.05);
-  color: #ffd700;
-  /* Use a solid color with transparency for the border to prevent "jumps" */
-  border: 1px solid rgba(255, 215, 0, 0.3);
-  padding: 6px 12px;
-  font-size: 14px;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-  z-index: 60;
-  
-  /* Smooth transition for colors only */
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-  user-select: none;
-}
-
-.back-to-menu-btn:hover {
-  /* IMPORTANT: You must keep the transform exactly the same here */
-  transform: translateY(-50%); 
-  
-  background: rgba(255, 215, 0, 0.15);
-  border-color: rgba(255, 215, 0, 1); /* Solid gold */
-  color: white;
-  
-  /* Remove any box-shadow or scale that might make it look like it's shifting */
-  box-shadow: none; 
-}
-
-.back-to-menu-btn:active {
-  /* Optional: a very slight brightness change instead of moving */
-  filter: brightness(1.2);
-  transform: translateY(-50%);
-}
-
 .time-potion-btn {
   position: absolute;
-  left: 10px; 
-  /* Positioned exactly below the menu button */
-  top: calc(50% + 45px); 
+  left: 7px; 
+  top: calc(30px + 35px); 
   transform: translateY(-50%); 
-
-  /* Magical Aesthetic */
   background: linear-gradient(135deg, rgba(0, 102, 255, 0.2), rgba(153, 0, 255, 0.2));
   color: #00d4ff;
   border: 1px solid rgba(0, 212, 255, 0.4);
   padding: 8px 16px;
   font-size: 14px;
   font-weight: bold;
-  border-radius: 20px; /* More rounded like a bottle */
+  border-radius: 20px;
   cursor: pointer;
   z-index: 60;
-  
-  /* Glowing effect */
   box-shadow: 0 0 10px rgba(0, 102, 255, 0.2);
   transition: all 0.3s ease;
   user-select: none;
@@ -399,19 +353,16 @@
 
 .arrow-btn {
   position: absolute;
-  left: 10px; 
-  /* Positioned exactly below the menu button */
-  top: calc(50% + 90px); 
+  left: 7px; 
+  top: calc(65px + 45px); 
   transform: translateY(-50%); 
-
-  /* Magical Aesthetic */
   background: linear-gradient(135deg, rgba(255, 213, 0, 0.4), rgba(255, 196, 0, 0.2));
   color: #ffd500;
   border: 1px solid rgba(255, 213, 0, 0.4);
   padding: 8px 16px;
   font-size: 14px;
   font-weight: bold;
-  border-radius: 20px; /* More rounded like a bottle */
+  border-radius: 20px;
   cursor: pointer;
   z-index: 60;
   
