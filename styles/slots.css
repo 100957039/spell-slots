@@ -1,4 +1,3 @@
-/* The "Big Round Button" */
 .spin-button {
   width: 180px;
   height: 180px;
@@ -26,7 +25,59 @@
   transform: scale(0.9);
 }
 
-/* Horizontal Row for Reels */
+.spin-button:disabled {
+  background: radial-gradient(circle, #666e7a, #4a515d);
+  border: 8px solid #363b45;
+  color: #a0aab8;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
+  cursor: not-allowed;
+  opacity: 0.85;
+  transform: none;
+  filter: grayscale(90%);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.timer-spin-button {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #e0e0e0, #8c8c8c);
+
+  border: 8px solid #4a4a4a;
+  color: #1a1a1a;
+  font-size: 1.8rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 0 40px rgba(224, 224, 224, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.7);
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.timer-spin-button:hover {
+  transform: scale(1.1);
+  /* Silver glow on hover */
+  box-shadow: 0 0 60px rgba(224, 224, 224, 0.6);
+}
+
+.timer-spin-button:active {
+  transform: scale(0.9);
+}
+
+.timer-spin-button:disabled {
+  background: radial-gradient(circle, #666e7a, #4a515d);
+  border: 8px solid #363b45;
+  color: #a0aab8;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
+  cursor: not-allowed;
+  opacity: 0.85;
+  transform: none;
+  filter: grayscale(90%);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+}
+
 .slot-reel-frame {
   display: flex;
   flex-direction: row;
@@ -58,18 +109,16 @@
   top: 0;
   left: 0;
   width: 100%;
-  transform: translateY(-2600px);
+  transform: translateY(0);
   transition: transform 1s cubic-bezier(0.25, 1, 0.5, 1);
   user-select: none;
 }
 
 .is-spinning {
-  /* This moves the strip from bottom to the top icon (slotResults) */
   animation: rapid-scroll 1s linear infinite;
 }
 
 .is-landing {
-  /* This transition moves from wherever the loop was to the top icon (index 0) */
   transform: translateY(0);
   animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -152,13 +201,16 @@
   gap: 15px;
   background: #111;
   padding: 20px;
-  border: 4px solid #ffd700;
+  /* Silver border */
+  border: 4px solid #c0c0c0;
   border-radius: 20px;
-  box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+  /* Cool silver glow */
+  box-shadow: 0 0 30px rgba(192, 192, 192, 0.4);
   font-family: 'Courier New', Courier, monospace;
   font-size: 3rem;
   font-weight: 900;
-  text-shadow: 0 0 10px #ffd700;
+  /* Subtle silver text shadow */
+  text-shadow: 0 0 10px #c0c0c0;
 }
 
 .timer-reel {
@@ -172,12 +224,13 @@
   font-family: 'Courier New', Courier, monospace;
   font-size: 3rem;
   font-weight: 900;
-  color: #ffd700;
-  text-shadow: 0 0 10px #ffd700;
+  /* Light silver text color */
+  color: #e0e0e0;
+  /* Softer text glow */
+  text-shadow: 0 0 10px #e0e0e0;
   user-select: none;
 }
 
-/* Spinning Animation */
 .timer-strip {
   display: flex;
   flex-direction: column;
