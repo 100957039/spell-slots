@@ -1090,10 +1090,10 @@ export default function IconGrid({num, slots, time}){
   };
 
   const useReshuffle = () => {
-    if (points >= 1000 && !gameOver && !isCountingDown && !isReshuffling) {
+    if (points >= 500 && !gameOver && !isCountingDown && !isReshuffling) {
       setIsUserShuffle(true);
       setIconList(currentBoard => reshuffleBoard(currentBoard));
-      setPoints(prev => prev - 1000);
+      setPoints(prev => prev - 500);
     }
   };
 
