@@ -5,7 +5,7 @@ import '../../styles/slots.css';
 
 export default function Slot({num, returnToMenu, time}) {
   const MIN_TIME = 300;
-  const MAX_TIME = 500;
+  const MAX_TIME = 540;
   const [stageSlot, setStageSlot] = useState('idle');
   const [stageTimer, setStageTimer] = useState('idle');
   const slotRoll = [

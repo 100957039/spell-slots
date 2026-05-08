@@ -634,3 +634,9 @@
 .timer-box.is-flashing {
   animation: flash-steady-blue 0.5s ease-out;
 }
+
+.icon.is-locked {
+  cursor: not-allowed;
+  user-select: none; 
+  -webkit-user-drag: none;
+}

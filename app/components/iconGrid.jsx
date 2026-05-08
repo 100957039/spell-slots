@@ -15,16 +15,16 @@ export default function IconGrid({num, slots, time}){
   const [countdown, setCountdown] = useState(3);
   const [isReshuffling, setIsReshuffling] = useState(false);
   const [isTimePotionUsed, setIsTimePotionUsed] = useState(false);
-  const [timePotion, setTimePotion] = useState(1);
   const [isLooping, setIsLooping] = useState(false);
   const [timerOffsets, setTimerOffsets] = useState([0, 0]);
-  const [arrow, setArrow] = useState(1);
   const [isArrowActive, setIsArrowActive] = useState(false);
   const [points, setPoints] = useState(0);
   const [isUserShuffle, setIsUserShuffle] = useState(false);
+  const [canPlay, setCanPlay] = useState(true);
   const dragItem = useRef(null);
   const timerRoll = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
   
+  // Tick countdown
   useEffect(() => {
     if (countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
@@ -34,6 +34,7 @@ export default function IconGrid({num, slots, time}){
     }
   }, [countdown]);
 
+  // Create initial board
   useEffect(() => {
     setHasMounted(true);
     const newSlotList = structuredClone(slots);
@@ -84,11 +85,16 @@ export default function IconGrid({num, slots, time}){
     genIconList(newSlotList);
   }, []);
 
+  // Check board for more matches
   useEffect(() => {
     const isAnimating = iconList.some(icon => icon.isFalling);
     if (isAnimating || iconList.length === 0 || gameOver) return;
 
     const matchedIndexes = checkMatches(iconList);
+
+    if(matchedIndexes.length === 0){
+      setCanPlay(true);
+    }
 
     if (matchedIndexes.length > 0) {
       const timer = setTimeout(() => {
@@ -110,6 +116,7 @@ export default function IconGrid({num, slots, time}){
     }
   }, [iconList, hasMounted, gameOver]);
 
+  // Tick Timer
   useEffect(() => {
     // Stop the timer if game is over
     if (gameOver || timeLeft <= 0 || isCountingDown || isReshuffling || isTimePotionUsed) return;
@@ -128,6 +135,7 @@ export default function IconGrid({num, slots, time}){
     return () => clearInterval(timer);
   }, [timeLeft, gameOver, isCountingDown, isReshuffling, isTimePotionUsed]);
 
+  // Reset isReshuffling and userShuffle check
   useEffect(() => {
       const timer = setTimeout(() => (setIsReshuffling(false), setIsUserShuffle(false)), 1500);
       return () => clearTimeout(timer);
@@ -135,7 +143,7 @@ export default function IconGrid({num, slots, time}){
 
   function genRandIcon(index, excludeType, genSlotIcon = false, genWinIcon = false, genOnlyNormalIcon = false) {
     const iconChance = genOnlyNormalIcon ? 95 : 100;
-    const SPECIAL_ICON_CHANCE = 100;
+    const SPECIAL_ICON_CHANCE = 1000;
     const specialIcon = Math.floor(Math.random() * SPECIAL_ICON_CHANCE);
 
     let icon = {
@@ -151,34 +159,31 @@ export default function IconGrid({num, slots, time}){
     }
     let iconType;
 
-    if(!genSlotIcon && !genOnlyNormalIcon && !genWinIcon && specialIcon > 97){
-      if(specialIcon > 98){
-        // Time Potion
-        icon = {
-          id: `icon${index.toString()}`,
-          grid: index,
-          src: "/icons/Time_Potion_Icon.png",
-          type: "time",
-          isSlot: false,
-          isFalling: false,
-          isNewSlot: false,
-          isSlotFilled: true,
-          isSpecial: true
-        };
-      } else if(specialIcon > 97){
-        // Arrow
-        icon = {
-          id: `icon${index.toString()}`,
-          grid: index,
-          src: "/icons/Arrow_Icon.png",
-          type: "arrow",
-          isSlot: false,
-          isFalling: false,
-          isNewSlot: false,
-          isSlotFilled: true,
-          isSpecial: true
-        }
-      }
+    if(!genSlotIcon && !genOnlyNormalIcon && !genWinIcon && specialIcon <= 4 ){
+      // Time Potion
+      icon = {
+        id: `icon${index.toString()}`,
+        grid: index,
+        src: "/icons/Time_Potion_Icon.png",
+        type: "time",
+        isSlot: false,
+        isFalling: false,
+        isNewSlot: false,
+        isSlotFilled: true,
+        isSpecial: true
+      };
+      // // Arrow
+      // icon = {
+      //   id: `icon${index.toString()}`,
+      //   grid: index,
+      //   src: "/icons/Arrow_Icon.png",
+      //   type: "arrow",
+      //   isSlot: false,
+      //   isFalling: false,
+      //   isNewSlot: false,
+      //   isSlotFilled: true,
+      //   isSpecial: true
+      // }
       return icon;
     }
 
@@ -258,7 +263,7 @@ export default function IconGrid({num, slots, time}){
         isSpecial: false
       }
       
-    // } else if(iconType < 90){
+    // } else if(iconType < 96){
     //   // Sulfur
     //   icon = {
     //     id: `icon${index.toString()}`,
@@ -371,19 +376,24 @@ export default function IconGrid({num, slots, time}){
   function checkInitialMatches (currentIndex, type, boardToCheck){
     const checkVertical = num;
     const CHECK_HORIZONTAL = 1;
-    const checkDiagonal = checkVertical + CHECK_HORIZONTAL;
+    const checkDiagonal1 = checkVertical + CHECK_HORIZONTAL;
+    const checkDiagonal2 = checkVertical - CHECK_HORIZONTAL;
     const MIN_COORD = 1;
+    const maxCoord = num - 2;
     const checkList = [
       [checkVertical, (checkVertical*2)],
       [CHECK_HORIZONTAL, (CHECK_HORIZONTAL*2)],
-      [checkDiagonal, (checkDiagonal*2)]
+      [checkDiagonal1, (checkDiagonal1*2)],
+      [checkDiagonal2, (checkDiagonal2*2)]
     ];
 
     const indexX = currentIndex % num;
     const indexY = Math.floor(currentIndex / num);
     const requireCheck = [
       (indexY > MIN_COORD),
-      (indexX > MIN_COORD)
+      (indexX > MIN_COORD),
+      (indexY > MIN_COORD && indexX > MIN_COORD),
+      (indexY > MIN_COORD && indexX < maxCoord)
     ];
 
       for(let i = 0; i < checkList.length; i++){
@@ -444,6 +454,8 @@ export default function IconGrid({num, slots, time}){
     const indexes = isValidMove(tempBoard, item1, item2);
 
     if (indexes.length > 0){
+      // Doesn't let the player move icons until cascading matches are resolved
+      setCanPlay(false);
       const finalBoard = processMatch(indexes, tempBoard);
       setIconList(finalBoard);
     } else {
@@ -472,6 +484,8 @@ export default function IconGrid({num, slots, time}){
   const isValidMove = (tempIconList, item1, item2) => {
     const checkVertical = num;
     const CHECK_HORIZONTAL = 1;
+    const checkDiagonal1 = checkVertical + CHECK_HORIZONTAL;
+    const checkDiagonal2 = checkVertical - CHECK_HORIZONTAL;
     const finalRow = num * (num - 1);
     const centerSquare = (checkVertical * (checkVertical-1)) + (Math.floor(checkVertical/2));
     const centerIndexes = [centerSquare - 2, centerSquare - 1, centerSquare, centerSquare + 1, centerSquare + 2];
@@ -483,7 +497,7 @@ export default function IconGrid({num, slots, time}){
     );
     const MIN_COORD = 1;
     const maxCoord = num - 2;
-    // Check Up, Left, Down, Right, Vertical, Horizontal
+    // Check Up, Left, Down, Right, Vertical, Horizontal, DiagonalLU, DiagonalRD, DiagonalUD, DiagonalRU, DiagonalLD, DiagonalDU 
     const checkList = [
       [checkVertical, (checkVertical*2)],
       [CHECK_HORIZONTAL, (CHECK_HORIZONTAL*2)],
@@ -491,24 +505,42 @@ export default function IconGrid({num, slots, time}){
       [-CHECK_HORIZONTAL, -(CHECK_HORIZONTAL*2)],
       [checkVertical, -checkVertical],
       [CHECK_HORIZONTAL, -CHECK_HORIZONTAL],
+
+      [checkDiagonal1, (checkDiagonal1*2)],
+      [-checkDiagonal1, -(checkDiagonal1*2)],
+      [checkDiagonal1, -checkDiagonal1],
+      [checkDiagonal2, (checkDiagonal2*2)],
+      [-checkDiagonal2, -(checkDiagonal2*2)],
+      [checkDiagonal2, -checkDiagonal2],
     ];
+
     const itemList = [tempIconList[item2.grid], tempIconList[item1.grid]];
     let indexes = [];
 
+    // If the move doesn't include the center tiles
     if(!isCenterSquare) {
       for(let i = 0; i < (itemList.length); i++){
         for(let j = 0; j < checkList.length; j++){
           const indexX = itemList[i].grid % num;
           const indexY = Math.floor(itemList[i].grid / num);
-          // Check Up, Left, Down, Right, Vertical, Horizontal
+          // Check Up, Left, Down, Right, Vertical, Horizontal, DiagonalLU, DiagonalRD, DiagonalUD, DiagonalRU, DiagonalLD, DiagonalDU 
           const requireCheck = [
             (indexY > MIN_COORD),
             (indexX > MIN_COORD),
             (indexY < maxCoord),
             (indexX < maxCoord),
             (indexY > (MIN_COORD - 1) && indexY < (maxCoord + 1)),
-            (indexX > (MIN_COORD - 1) && indexX < (maxCoord + 1))
+            (indexX > (MIN_COORD - 1) && indexX < (maxCoord + 1)),
+
+            (indexY > MIN_COORD && indexX > MIN_COORD),
+            (indexY < maxCoord && indexX < maxCoord),
+            (indexY > (MIN_COORD - 1) && indexX > (MIN_COORD - 1) && indexY < (maxCoord + 1) && indexX < (maxCoord + 1)),
+            
+            (indexY > MIN_COORD && indexX < maxCoord),
+            (indexY < maxCoord && indexX > MIN_COORD),
+            (indexY > (MIN_COORD - 1) && indexX > (MIN_COORD - 1) && indexY < (maxCoord + 1) && indexX < (maxCoord + 1)),
           ];
+
           const check1 = itemList[i].grid - checkList[j][0];
           const check2 = itemList[i].grid - checkList[j][1];
 
@@ -520,6 +552,7 @@ export default function IconGrid({num, slots, time}){
           }
         }
       }
+    // If the move is with the center, ensure the icon 
     } else {
       const centerIndex = (item2.grid - finalRow) - 2;
       if(!centerIndexes.includes(item1.grid) && item1.type == slots[centerIndex].type && !item2.isSlotFilled){
@@ -529,10 +562,10 @@ export default function IconGrid({num, slots, time}){
     
     if(indexes.length == 0 && (item1.isSlot && item2.isSlot) && !isCenterSquare){
       indexes.push(item2.grid, item1.grid);
-    } else if(indexes.length == 0 && !isCenterSquare && isArrowActive){
+    } else if(indexes.length == 0 && !isCenterSquare && isArrowActive && points >= 500){
       indexes.push(item2.grid, item1.grid);
       setIsArrowActive(false);
-      setArrow(prev => prev - 1);
+      setPoints(prev => prev - 500);
     } else if(indexes.length != 0 && (item1.isSpecial || item2.isSpecial)){
       if(item1.isSpecial){
         indexes.push(item2.grid);
@@ -553,10 +586,12 @@ export default function IconGrid({num, slots, time}){
     const centerIndexes = centerColumn.map(col => (centerRow * gridNumber) + col);
     let tempIconList = [...tempBoard];
     let newIndexes = [];
-    const TIME_POTION_TYPE = 'time';
     const isCenterMove = indexes.some(r=> centerIndexes.includes(r));
     let isSpecialMatch = false;
     let pointTotal = 0;
+
+    
+    
 
     // If move was between 2 slot icons, stop processing
     if(indexes.length >= BASIC_MATCH){
@@ -577,31 +612,34 @@ export default function IconGrid({num, slots, time}){
       const lastIndex = newIndexes.length - 1;
 
       if(tempBoard[newIndexes[lastIndex]].isSpecial){
-        const specialIconType = tempBoard[newIndexes[lastIndex]].type;
         isSpecialMatch = true;
         
         let buttonElement;
 
-        if(specialIconType == TIME_POTION_TYPE){
-          setTimePotion(prev => prev + 1);
-          buttonElement = document.querySelector('.time-potion-btn');
-        } else{
-          setArrow(prev => prev + 1);
-          buttonElement = document.querySelector('.arrow-btn');
-        }
+        useTimePotion(true);
+        buttonElement = document.querySelector('.time-potion-btn');
+
+        // setArrow(prev => prev + 1);
+        // buttonElement = document.querySelector('.arrow-btn');
+
         triggerFlash(buttonElement);
-        pointTotal += 300;
+        pointTotal += 30;
       }
 
+      // Check if the match is a slot match by seeing if 3 slots are included in the match
+      let isSlotMatch = false;
+      let counter = 0;
+      let slotType = tempIconList[newIndexes[0]].type;
 
-      // Check if the match is a slot match
-      let isSlotMatch = true;
-      const slotType = tempIconList[newIndexes[0]].type;
- 
-      for(let i = 0; i < newIndexes.length - 1; i++){
-        if(!tempIconList[newIndexes[i]].isSlot){
-          isSlotMatch = false;
-          break;
+      for(let i = 0; i < newIndexes.length; i++){
+        if(tempIconList[newIndexes[i]].isSlot){
+          counter += 1;
+
+          if(counter >=3){
+            isSlotMatch = true;
+            slotType = tempIconList[newIndexes[i]].type;
+            break;
+          }
         }
       }
 
@@ -615,26 +653,26 @@ export default function IconGrid({num, slots, time}){
         // If it's a slot match, generate a new slot that's not the same type
         const newSlot = genRandIcon(newIndexes[0], slotType, true);
         tempIconList[newIndexes[0]] = {...newSlot, isNewSlot: true};
-        pointTotal += 200;
+        pointTotal += 20;
       
       // If it's a 5+ icon match
       } else if(newIndexes.length > BASIC_MATCH + 1 && !isSpecialMatch || newIndexes.length > (BASIC_MATCH + 2)) {
-        const newSlot = genRandIcon(newIndexes[0], "", true, true);
-        tempIconList[newIndexes[0]] = {...newSlot, isNewSlot: true};
-        pointTotal += 400;
-      // If it's a 4 icon match
-      } else if(newIndexes.length > BASIC_MATCH && !isSpecialMatch || newIndexes.length > (BASIC_MATCH + 1)) {
         const newSlot = genRandIcon(newIndexes[0], "", true);
         tempIconList[newIndexes[0]] = {...newSlot, isNewSlot: true};
-        pointTotal += 200;
+        pointTotal += 40;
+      // If it's a 4 icon match
+      } else if(newIndexes.length > BASIC_MATCH && !isSpecialMatch || newIndexes.length > (BASIC_MATCH + 1)) {
+        pointTotal += 20;
       }
 
-      // Add 100 points for making any kind of match
-      pointTotal += 100;
+      // Add 10 points for making any kind of match
+      pointTotal += 10;
 
       // Go through each row of the board
       for (let col = 0; col < gridNumber; col++) {
         let columnIndexes = [];
+
+        // Get each index for the column
         for (let row = 0; row < gridNumber; row++) {
           columnIndexes.push(row * gridNumber + col);
         }
@@ -766,7 +804,6 @@ export default function IconGrid({num, slots, time}){
       } 
       
       // Update point count
-      console.log(`Points from move: ${pointTotal}`);
       updatePoints(pointTotal);
 
       // Resets falling animation
@@ -781,37 +818,45 @@ export default function IconGrid({num, slots, time}){
       tempIconList[indexes[0]] = { ...tempIconList[indexes[0]], isNewSlot: true, isSlotFilled: true };
       tempIconList[indexes[1]] = { ...tempIconList[indexes[1]], type: null, src: "/icons/error.png" };
 
-      const column = indexes[0] - (gridNumber * (gridNumber - 1));
+      const row = Math.floor(indexes[1] / gridNumber)
+      const column = indexes[1] - (gridNumber * row);
+      const isCenter = centerColumn.includes(column);
+      let updatedColumn = [];
       let columnIndexes = [];
+
       for (let row = 0; row < gridNumber; row++) {
         columnIndexes.push(row * gridNumber + column);
       }
 
-      let updatedColumn = new Array(gridNumber);
-
       const centerIcon = tempIconList[columnIndexes[centerRow]];
-      let movableIcons = columnIndexes
+
+      if(isCenter){
+        let movableIcons = columnIndexes
         .filter((_, rowIndex) => rowIndex !== centerRow)
         .map(index => tempIconList[index])
         .filter(icon => icon.type !== null);
 
-      const missingCount = (gridNumber - 1) - movableIcons.length;
-      let newIcons = [];
-      for (let i = 0; i < missingCount; i++) {
-          newIcons.push({ ...genRandIcon(column), isFalling: true });
-      }
-
-      const combinedMovable = [...newIcons, ...movableIcons];
-      
-      let movablePointer = 0;
-      for (let i = 0; i < gridNumber; i++) {
-        if (i === centerRow) {
-            updatedColumn[i] = centerIcon;
-        } else {
-            updatedColumn[i] = combinedMovable[movablePointer++];
+        const missingCount = (gridNumber - 1) - movableIcons.length;
+        let newIcons = [];
+        for (let i = 0; i < missingCount; i++) {
+            newIcons.push({ ...genRandIcon(column), isFalling: true });
         }
-      }
 
+        updatedColumn = [...newIcons, ...movableIcons, centerIcon];
+      } else {
+        let movableIcons = columnIndexes
+        .map(index => tempIconList[index])
+        .filter(icon => icon.type !== null);
+
+        const missingCount = (gridNumber) - movableIcons.length;
+        let newIcons = [];
+        for (let i = 0; i < missingCount; i++) {
+            newIcons.push({ ...genRandIcon(column), isFalling: true });
+        }
+
+        updatedColumn = [...newIcons, ...movableIcons];
+      }
+      
       columnIndexes.forEach((actualGridIndex, i) => {
         const targetIcon = updatedColumn[i];
         
@@ -829,7 +874,7 @@ export default function IconGrid({num, slots, time}){
 
       // Add 1000 points for filling a center slot
       console.log(`Center Filled!`);
-      updatePoints(1000);
+      updatePoints(100);
 
       // Resets falling animation
       setTimeout(() => {
@@ -848,7 +893,7 @@ export default function IconGrid({num, slots, time}){
 
   // Checks the whole board after a move is completed for cascading matches
   function checkMatches(tempIconList){
-    const indexes = new Set();
+    const indexes = [];
     const size = num;
     const centerRow = size - 1;
     const centerColumnSlot = Math.floor(size/2);
@@ -871,9 +916,9 @@ export default function IconGrid({num, slots, time}){
         notCenter = !centerIndexes.includes(i) && !centerIndexes.includes(i + 1) && !centerIndexes.includes(i + 2);
         
         if (current.type === right1.type && current.type === right2.type && notCenter) {
-          indexes.add(i);
-          indexes.add(i + 1);
-          indexes.add(i + 2);
+          indexes.push(i);
+          indexes.push(i + 1);
+          indexes.push(i + 2);
         }
       }
 
@@ -884,14 +929,40 @@ export default function IconGrid({num, slots, time}){
         notCenter = !centerIndexes.includes(i) && !centerIndexes.includes(i + size) && !centerIndexes.includes(i + (size * 2));
 
         if (current.type === down1.type && current.type === down2.type && notCenter) {
-          indexes.add(i);
-          indexes.add(i + size);
-          indexes.add(i + (size * 2));
+          indexes.push(i);
+          indexes.push(i + size);
+          indexes.push(i + (size * 2));
+        }
+      }
+
+      // Only check if we have at least 2 tiles remaining right and below
+      if (x <= size - 3 && y <= size - 3) {
+        const diagonalRD1 = tempIconList[i + (size + 1)];
+        const diagonalRD2 = tempIconList[i + ((size + 1) * 2)];
+        notCenter = !centerIndexes.includes(i) && !centerIndexes.includes(i + (size + 1)) && !centerIndexes.includes(i + ((size + 1) * 2));
+
+        if (current.type === diagonalRD1.type && current.type === diagonalRD2.type && notCenter) {
+          indexes.push(i);
+          indexes.push(i + (size + 1));
+          indexes.push(i + ((size + 1) * 2));
+        }
+      }
+
+      // Only check if we have at least 2 tiles remaining left and below
+      if (x >= 2 && y <= size - 3) {
+        const diagonalLD1 = tempIconList[i + (size - 1)];
+        const diagonalLD2 = tempIconList[i + ((size - 1) * 2)];
+        notCenter = !centerIndexes.includes(i) && !centerIndexes.includes(i + (size - 1)) && !centerIndexes.includes(i + ((size - 1) * 2));
+
+        if (current.type === diagonalLD1.type && current.type === diagonalLD2.type && notCenter) {
+          indexes.push(i);
+          indexes.push(i + (size - 1));
+          indexes.push(i + ((size - 1) * 2));
         }
       }
     }
 
-    return Array.from(indexes);
+    return indexes;
   }
 
   const hasPossibleMoves = (tempBoard) => {
@@ -972,51 +1043,57 @@ export default function IconGrid({num, slots, time}){
       tempBoard[centerSquare + 1].type == slots[3].type &&
       tempBoard[centerSquare + 2].type == slots[4].type
     ){
-      updatePoints(10000);
+      updatePoints(1000);
       return true;
     }
     return false;
   }
 
-  const useTimePotion = () => {
+  const useTimePotion = (isFree = false) => {
     const TIME_POTION_MIN = 15;
     const TIME_POTION_MAX = 60;
 
-    if (timePotion > 0 && !gameOver && !isCountingDown && !isReshuffling && timeLeft === undefined) return;
-      const addTime = Math.floor(Math.random() * (TIME_POTION_MAX - TIME_POTION_MIN + 1)) + TIME_POTION_MIN;
-      const finalTime = timeLeft + addTime;
-      const timeElement = document.querySelector('.timer-box');
-      const digits = addTime.toString().padStart(2, '0').split('').map(Number);
-      const offsets = digits.map(d => -(d * 200) - 200);
-      
-      setTimeDisplay(digits);
-      setTimerOffsets(offsets);
-      setIsLooping(true);
-      setIsTimePotionUsed(true);
+    setIsArrowActive(false);
 
+    if ((points < 1000 && !isFree) || gameOver || isCountingDown || isReshuffling || timeLeft === undefined) return;
+
+    const addTime = Math.floor(Math.random() * (TIME_POTION_MAX - TIME_POTION_MIN + 1)) + TIME_POTION_MIN;
+    const finalTime = timeLeft + addTime;
+    const timeElement = document.querySelector('.timer-box');
+    const digits = addTime.toString().padStart(2, '0').split('').map(Number);
+    const offsets = digits.map(d => -(d * 200) - 200);
+    
+    setTimeDisplay(digits);
+    setTimerOffsets(offsets);
+    setIsLooping(true);
+    setIsTimePotionUsed(true);
+
+    setTimeout(() => {
+      setIsLooping(false);
+      
       setTimeout(() => {
-        setIsLooping(false);
+        setTimeLeft(finalTime);
+        setIsTimePotionUsed(false);
+        if(!isFree){
+          setPoints(prev => prev - 1000);
+        }
         
-        setTimeout(() => {
-          setTimeLeft(finalTime);
-          setIsTimePotionUsed(false);
-          setTimePotion(prev => prev - 1);
-          triggerFlash(timeElement);
-        }, 500);
+        triggerFlash(timeElement);
       }, 500);
+    }, 500);
   };
 
   const useArrow = () => {
-    if (arrow > 0 && !gameOver && !isCountingDown && !isReshuffling) {
+    if (points >= 500 && !gameOver && !isCountingDown && !isReshuffling && !isLooping) {
       isArrowActive ? setIsArrowActive(false) : setIsArrowActive(true);
     }
   };
 
   const useReshuffle = () => {
-    if (points >= 5000 && !gameOver && !isCountingDown && !isReshuffling) {
+    if (points >= 1000 && !gameOver && !isCountingDown && !isReshuffling) {
       setIsUserShuffle(true);
       setIconList(currentBoard => reshuffleBoard(currentBoard));
-      setPoints(prev => prev - 5000);
+      setPoints(prev => prev - 1000);
     }
   };
 
@@ -1040,14 +1117,14 @@ export default function IconGrid({num, slots, time}){
   return (
     <div className="game-wrapper">
       <div className="side-controls">
-        <button className="time-potion-btn" onClick={useTimePotion} disabled={timePotion <= 0 || gameOver || isCountingDown || isReshuffling || isLooping}>
-          <span><img src="/icons/Time_Potion_Icon.png" alt="Time Potion" /></span> Time Potion: ({timePotion})
+        <button className="time-potion-btn" onClick={useTimePotion} disabled={points < 1000 || gameOver || isCountingDown || isReshuffling || isLooping}>
+          <span><img src="/icons/Time_Potion_Icon.png" alt="Time Potion" /></span> Time Potion: (1000pts)
         </button>
-        <button className={`arrow-btn ${isArrowActive ? 'arrow-btn-active' : ''}`} onClick={useArrow} disabled={arrow <= 0 || gameOver || isCountingDown || isReshuffling || isLooping}>
-          <span><img src="/icons/Arrow_Icon.png" alt="Arrow" /></span> Arrow: ({arrow})
+        <button className={`arrow-btn ${isArrowActive ? 'arrow-btn-active' : ''}`} onClick={useArrow} disabled={points < 500 || gameOver || isCountingDown || isReshuffling || isLooping}>
+          <span><img src="/icons/Arrow_Icon.png" alt="Arrow" /></span> Arrow: (500pts)
         </button>
-        <button className={`reshuffle-btn`} onClick={useReshuffle} disabled={points < 1000 || gameOver || isCountingDown || isReshuffling || isLooping}>
-          <span><img src="/icons/Reshuffle_Icon.png" alt="Reshuffle" /></span> Reshuffle: (5000pts)
+        <button className={`reshuffle-btn`} onClick={useReshuffle} disabled={points < 500 || gameOver || isCountingDown || isReshuffling || isLooping}>
+          <span><img src="/icons/Reshuffle_Icon.png" alt="Reshuffle" /></span> Reshuffle: (500pts)
         </button>
       </div>
 
@@ -1091,17 +1168,18 @@ export default function IconGrid({num, slots, time}){
                     grid={icon.grid}
                     type={icon.type}
                     isslot={(icon.isSlot ?? false).toString()}
-                    draggable={!isCenterSquare ? "true" : false}
+                    draggable={canPlay && !isCenterSquare}
                     onDragStart={!isCountingDown ? dragstartHandler : undefined}
                     onDragEnd={!isCountingDown ? dragEndHandler : undefined}
                     onDrop={!isCountingDown ? dropHandler : undefined}
                     onDragOver={!isCountingDown ? dragoverHandler : undefined}
                     className={`
-                      ${!isCenterSquare ? 'icon' : 'centerIcon'} 
+                      ${!isCenterSquare ? 'icon' : 'winIcon'} 
                       ${icon.isSlot ? 'isSlot' : ''} 
                       ${icon.isFalling ? 'iconFalling' : ''} 
                       ${icon.isNewSlot ? 'iconPopForward' : ''}
                       ${isCenterSquare && !icon.isSlotFilled ? 'isEmpty' : ''}
+                      ${!canPlay ? 'is-locked' : ''}
                     `}
                   />
                 )}
