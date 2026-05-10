@@ -9,21 +9,30 @@ export default function IconGrid({num, slots, time}){
   const [iconList, setIconList] = useState([]);
   const [gameOver, setGameOver] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
+
   const [timeLeft, setTimeLeft] = useState(time);
-  const [timeDisplay, setTimeDisplay] = useState([0, 0]);
+  const [timeDisplay, setTimeDisplay] = useState([0, 0, 0]);
+  const [timerOffsets, setTimerOffsets] = useState([0, 0, 0]);
   const [isCountingDown, setIsCountingDown] = useState(true);
   const [countdown, setCountdown] = useState(3);
+
+  const [points, setPoints] = useState(0);
+
   const [isReshuffling, setIsReshuffling] = useState(false);
   const [isTimePotionUsed, setIsTimePotionUsed] = useState(false);
   const [isLooping, setIsLooping] = useState(false);
-  const [timerOffsets, setTimerOffsets] = useState([0, 0]);
   const [isArrowActive, setIsArrowActive] = useState(false);
-  const [points, setPoints] = useState(0);
+  const [isDiagonalActive, setIsDiagonalActive] = useState(false);
   const [isUserShuffle, setIsUserShuffle] = useState(false);
+
   const [canPlay, setCanPlay] = useState(true);
+  const [placeTimePotion, setPlaceTimePotion] = useState(false);
+  
   const dragItem = useRef(null);
   const timerRoll = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  let glowingIcons = [];
   
+
   // Tick countdown
   useEffect(() => {
     if (countdown > 0) {
@@ -119,7 +128,7 @@ export default function IconGrid({num, slots, time}){
   // Tick Timer
   useEffect(() => {
     // Stop the timer if game is over
-    if (gameOver || timeLeft <= 0 || isCountingDown || isReshuffling || isTimePotionUsed) return;
+    if (gameOver || (timeLeft <= 0 && !isLooping) || isCountingDown || isReshuffling || isTimePotionUsed) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -141,10 +150,10 @@ export default function IconGrid({num, slots, time}){
       return () => clearTimeout(timer);
   }, [isReshuffling]);
 
-  function genRandIcon(index, excludeType, genSlotIcon = false, genWinIcon = false, genOnlyNormalIcon = false) {
+  function genRandIcon(index, excludeType, genSlotIcon = false, genWinIcon = false, genTimePotion = false, genOnlyNormalIcon = false) {
     const iconChance = genOnlyNormalIcon ? 95 : 100;
     const SPECIAL_ICON_CHANCE = 1000;
-    const specialIcon = Math.floor(Math.random() * SPECIAL_ICON_CHANCE);
+    const specialIcon = genTimePotion ? 0 : Math.floor(Math.random() * SPECIAL_ICON_CHANCE);
 
     let icon = {
       id: "",
@@ -466,12 +475,24 @@ export default function IconGrid({num, slots, time}){
   const isAdjacent = (grid1, grid2) => {
     const checkVertical = num;
     const CHECK_HORIZONTAL = 1;
+    const checkDiagonal1 = checkVertical + CHECK_HORIZONTAL;
+    const checkDiagonal2 = checkVertical - CHECK_HORIZONTAL;
     const checkList = [
       grid1 - checkVertical,
       grid1 + checkVertical,
       grid1 - CHECK_HORIZONTAL,
       grid1 + CHECK_HORIZONTAL
     ];
+    const diagonalCheck = [
+      grid1 - checkDiagonal1,
+      grid1 + checkDiagonal1,
+      grid1 - checkDiagonal2,
+      grid1 + checkDiagonal2
+    ];
+
+    if(isDiagonalActive && points >= 500){
+      checkList.push(...diagonalCheck);
+    }
 
     for(const check of checkList){
       if(grid2 == check){
@@ -535,7 +556,6 @@ export default function IconGrid({num, slots, time}){
             (indexY > MIN_COORD && indexX > MIN_COORD),
             (indexY < maxCoord && indexX < maxCoord),
             (indexY > (MIN_COORD - 1) && indexX > (MIN_COORD - 1) && indexY < (maxCoord + 1) && indexX < (maxCoord + 1)),
-            
             (indexY > MIN_COORD && indexX < maxCoord),
             (indexY < maxCoord && indexX > MIN_COORD),
             (indexY > (MIN_COORD - 1) && indexX > (MIN_COORD - 1) && indexY < (maxCoord + 1) && indexX < (maxCoord + 1)),
@@ -546,7 +566,7 @@ export default function IconGrid({num, slots, time}){
 
           if(requireCheck[j]){
 
-            if(itemList[i].type == tempIconList[check1].type && itemList[i].type == tempIconList[check2].type && !itemList[i].isSpecial){
+            if(itemList[i].type == tempIconList[check1].type && itemList[i].type == tempIconList[check2].type){
               indexes.push(itemList[i].grid, check1, check2);
             }
           }
@@ -565,7 +585,7 @@ export default function IconGrid({num, slots, time}){
     } else if(indexes.length == 0 && !isCenterSquare && isArrowActive && points >= 500){
       indexes.push(item2.grid, item1.grid);
       setIsArrowActive(false);
-      setPoints(prev => prev - 500);
+      updatePoints(-500);
     } else if(indexes.length != 0 && (item1.isSpecial || item2.isSpecial)){
       if(item1.isSpecial){
         indexes.push(item2.grid);
@@ -589,9 +609,7 @@ export default function IconGrid({num, slots, time}){
     const isCenterMove = indexes.some(r=> centerIndexes.includes(r));
     let isSpecialMatch = false;
     let pointTotal = 0;
-
-    
-    
+    let potionPlaced = false;
 
     // If move was between 2 slot icons, stop processing
     if(indexes.length >= BASIC_MATCH){
@@ -608,22 +626,27 @@ export default function IconGrid({num, slots, time}){
         return tempIconList;
       }
 
+      // Checks if match is all specialIcons
+      let specialCounter = 0;
+
+      for(let index of indexes){
+        if(tempBoard[index].isSpecial){
+          specialCounter++;
+        }
+      }
+
       // Check if a special index was included in the match
       const lastIndex = newIndexes.length - 1;
 
-      if(tempBoard[newIndexes[lastIndex]].isSpecial){
+      // Match made of time potions, big amount
+      if(specialCounter >= 3){
+        useTimePotion(true, true);
+        pointTotal += 20;
+
+      } else if(tempBoard[newIndexes[lastIndex]].isSpecial){
         isSpecialMatch = true;
-        
-        let buttonElement;
-
-        useTimePotion(true);
-        buttonElement = document.querySelector('.time-potion-btn');
-
-        // setArrow(prev => prev + 1);
-        // buttonElement = document.querySelector('.arrow-btn');
-
-        triggerFlash(buttonElement);
-        pointTotal += 30;
+        useTimePotion(true, false);
+        pointTotal += 20;
       }
 
       // Check if the match is a slot match by seeing if 3 slots are included in the match
@@ -641,6 +664,12 @@ export default function IconGrid({num, slots, time}){
             break;
           }
         }
+      }
+
+      // Check if diagonal was used and adjust
+      if(isDiagonalActive){
+        updatePoints(-500);
+        setIsDiagonalActive(false);
       }
 
       // Set the matched Icons to null
@@ -662,6 +691,8 @@ export default function IconGrid({num, slots, time}){
         pointTotal += 40;
       // If it's a 4 icon match
       } else if(newIndexes.length > BASIC_MATCH && !isSpecialMatch || newIndexes.length > (BASIC_MATCH + 1)) {
+        const newSlot = genRandIcon(newIndexes[0], "", true);
+        tempIconList[newIndexes[0]] = {...newSlot, isNewSlot: true};
         pointTotal += 20;
       }
 
@@ -691,8 +722,16 @@ export default function IconGrid({num, slots, time}){
 
           const missingCount = (gridNumber - 1) - movableIcons.length;
           let newIcons = [];
+
           for (let i = 0; i < missingCount; i++) {
-              newIcons.push({ ...genRandIcon(col), isFalling: true });
+            newIcons.push({ ...genRandIcon(col), isFalling: true });
+          }
+
+          if(placeTimePotion && !potionPlaced && missingCount > 0){
+            newIcons.shift();
+            newIcons.splice(0, 0, {...genRandIcon(col, "", false, false, true), isNewSlot: true, isFalling: true})
+            potionPlaced = true;
+            setPlaceTimePotion(false);
           }
 
           const combinedMovable = [...newIcons, ...movableIcons];
@@ -722,6 +761,13 @@ export default function IconGrid({num, slots, time}){
           let newIcons = [];
           for (let i = 0; i < missingCount; i++) {
             newIcons.push({ ...genRandIcon(col), isFalling: true });
+          }
+
+          if(placeTimePotion && !potionPlaced && missingCount > 0){
+            newIcons.shift();
+            newIcons.splice(0, 0, {...genRandIcon(col, "", false, false, true), isNewSlot: true, isFalling: true})
+            potionPlaced = true;
+            setPlaceTimePotion(false);
           }
 
           const allFallingIcons = [...newIcons, ...movableIcons];
@@ -762,6 +808,13 @@ export default function IconGrid({num, slots, time}){
               bottomNewIcons.push({ ...genRandIcon(col), isFalling: true });
           }
 
+          if(placeTimePotion && !potionPlaced && topMissingCount > 0){
+            topNewIcons.shift();
+            topNewIcons.splice(0, 0, {...genRandIcon(col, "", false, false, true), isNewSlot: true, isFalling: true})
+            potionPlaced = true;
+            setPlaceTimePotion(false);
+          }
+
           updatedColumn = [
               ...topNewIcons, 
               ...topIcons, 
@@ -782,6 +835,13 @@ export default function IconGrid({num, slots, time}){
           for (let i = 0; i < missingCount; i++) {
             const icon = genRandIcon(col); // Pass col as a placeholder index
             newIcons.push({ ...icon, isFalling: true });
+          }
+
+          if(placeTimePotion && !potionPlaced && missingCount > 0){
+            newIcons.shift();
+            newIcons.splice(0, 0, {...genRandIcon(col, "", false, false, true), isNewSlot: true, isFalling: true})
+            potionPlaced = true;
+            setPlaceTimePotion(false);
           }
 
           updatedColumn = [...newIcons, ...remainingIcons];
@@ -839,8 +899,14 @@ export default function IconGrid({num, slots, time}){
         const missingCount = (gridNumber - 1) - movableIcons.length;
         let newIcons = [];
         for (let i = 0; i < missingCount; i++) {
-            newIcons.push({ ...genRandIcon(column), isFalling: true });
+          newIcons.push({ ...genRandIcon(column), isFalling: true });
         }
+
+        if(placeTimePotion && missingCount > 0){
+            newIcons.shift();
+            newIcons.splice(0, 0, {...genRandIcon(column, "", false, false, true), isNewSlot: true, isFalling: true})
+            setPlaceTimePotion(false);
+          }
 
         updatedColumn = [...newIcons, ...movableIcons, centerIcon];
       } else {
@@ -853,6 +919,12 @@ export default function IconGrid({num, slots, time}){
         for (let i = 0; i < missingCount; i++) {
             newIcons.push({ ...genRandIcon(column), isFalling: true });
         }
+
+        if(placeTimePotion && missingCount > 0){
+            newIcons.shift();
+            newIcons.splice(0, 0, {...genRandIcon(column, "", false, false, true), isNewSlot: true, isFalling: true})
+            setPlaceTimePotion(false);
+          }
 
         updatedColumn = [...newIcons, ...movableIcons];
       }
@@ -872,8 +944,7 @@ export default function IconGrid({num, slots, time}){
         };
       }); 
 
-      // Add 1000 points for filling a center slot
-      console.log(`Center Filled!`);
+      // Add 100 points for filling a center slot
       updatePoints(100);
 
       // Resets falling animation
@@ -892,7 +963,7 @@ export default function IconGrid({num, slots, time}){
   };
 
   // Checks the whole board after a move is completed for cascading matches
-  function checkMatches(tempIconList){
+  function checkMatches(tempIconList){ 
     const indexes = [];
     const size = num;
     const centerRow = size - 1;
@@ -900,65 +971,169 @@ export default function IconGrid({num, slots, time}){
     const centerColumn = [centerColumnSlot - 2, centerColumnSlot - 1, centerColumnSlot, centerColumnSlot + 1, centerColumnSlot + 2];
     const centerIndexes = centerColumn.map(col => (centerRow * size) + col);
 
-    for (let i = 0; i < tempIconList.length; i++) {
+    for (let i = tempIconList.length - 1; i >= 0; i--) {
       const x = i % size;
       const y = Math.floor(i / size);
       const current = tempIconList[i];
       let notCenter;
 
-      // Skip nulls, empty types, and special icons
-      if (!current.type || current.isSpecial) continue;
+      // Skip nulls and empty types
+      if (!current.type) continue;
  
-      // Only check if we have at least 2 tiles remaining to the right
-      if (x <= size - 3) {
-        const right1 = tempIconList[i + 1];
-        const right2 = tempIconList[i + 2];
-        notCenter = !centerIndexes.includes(i) && !centerIndexes.includes(i + 1) && !centerIndexes.includes(i + 2);
-        
-        if (current.type === right1.type && current.type === right2.type && notCenter) {
+      // Only check if we have at least 2 tiles remaining to the Left
+      if (x >= 2) {
+        const left1 = tempIconList[i - 1];
+        const left2 = tempIconList[i - 2];
+        const left3 = x >= 3 ? tempIconList[i - 3] : null;
+        const left4 = x >= 4 ? tempIconList[i - 4] : null;
+
+        notCenter = !centerIndexes.includes(i) && !centerIndexes.includes(i - 1) && !centerIndexes.includes(i - 2);
+
+        if (current.type === left1.type && current.type === left2.type && notCenter) {
           indexes.push(i);
+          indexes.push(i - 1);
+          indexes.push(i - 2);
+
+          if(left3 != null && !centerIndexes.includes(i - 3) && current.type === left3.type){
+            indexes.push(i - 3);
+
+            if(left4 != null && !centerIndexes.includes(i - 4) && current.type === left4.type){
+              indexes.push(i - 4);
+            }
+          }
+        }  
+      }
+
+      // Only check if we have at least 2 tiles remaining above
+      if (y >= 2) {
+        const up1 = tempIconList[i - size];
+        const up2 = tempIconList[i - (size * 2)];
+        const up3 = y >= 3 ? tempIconList[i - (size * 3)] : null;
+        const up4 = y >= 4 ? tempIconList[i - (size * 4)] : null;
+
+        notCenter = !centerIndexes.includes(i) && !centerIndexes.includes(i - size) && !centerIndexes.includes(i - (size * 2));
+
+        if (current.type === up1.type && current.type === up2.type && notCenter) {
+          indexes.push(i);
+          indexes.push(i - size);
+          indexes.push(i - (size * 2));
+
+          if(up3 != null && !centerIndexes.includes(i - (size * 3)) && current.type === up3.type){
+            indexes.push(i - (size * 3));
+
+            if(up4 != null && !centerIndexes.includes(i - (size * 4)) && current.type === up4.type){
+              indexes.push(i - (size * 4));
+            }
+          }
+        }
+      }
+
+      // Only check if we have at least 1 tiles remaining left and right
+      if (x > 0 && x < size - 1) {
+        const horizontal1 = tempIconList[i - 1];
+        const horizontal2 = tempIconList[i + 1];
+
+        notCenter = !centerIndexes.includes(i) && !centerIndexes.includes(i - 1) && !centerIndexes.includes(i + 1);
+
+        if (current.type === horizontal1.type && current.type === horizontal2.type && notCenter) {
+          indexes.push(i);
+          indexes.push(i - 1);
           indexes.push(i + 1);
-          indexes.push(i + 2);
         }
       }
 
-      // Only check if we have at least 2 tiles remaining below
-      if (y <= size - 3) {
-        const down1 = tempIconList[i + size];
-        const down2 = tempIconList[i + (size * 2)];
-        notCenter = !centerIndexes.includes(i) && !centerIndexes.includes(i + size) && !centerIndexes.includes(i + (size * 2));
+      // Only check if we have at least 1 tiles remaining up and down
+      if (y > 0 && y < size - 1) {
+        const vertical1 = tempIconList[i - size];
+        const vertical2 = tempIconList[i + size];
 
-        if (current.type === down1.type && current.type === down2.type && notCenter) {
+        notCenter = !centerIndexes.includes(i) && !centerIndexes.includes(i - size) && !centerIndexes.includes(i + size);
+
+        if (current.type === vertical1.type && current.type === vertical2.type && notCenter) {
           indexes.push(i);
+          indexes.push(i - size);
           indexes.push(i + size);
-          indexes.push(i + (size * 2));
         }
       }
 
-      // Only check if we have at least 2 tiles remaining right and below
-      if (x <= size - 3 && y <= size - 3) {
-        const diagonalRD1 = tempIconList[i + (size + 1)];
-        const diagonalRD2 = tempIconList[i + ((size + 1) * 2)];
-        notCenter = !centerIndexes.includes(i) && !centerIndexes.includes(i + (size + 1)) && !centerIndexes.includes(i + ((size + 1) * 2));
+      // Only check if we have at least 2 tiles remaining left and up
+      if (x >= 2 && y >= 2) {
+        const diagonalLU1 = tempIconList[i - (size + 1)];
+        const diagonalLU2 = tempIconList[i - ((size + 1) * 2)];
+        const diagonalLU3 = (x >= 3 && y >= 3) ? tempIconList[i - ((size + 1) * 3)] : null;
+        const diagonalLU4 = (x >= 4 && y >= 4) ? tempIconList[i - ((size + 1) * 4)] : null;
 
-        if (current.type === diagonalRD1.type && current.type === diagonalRD2.type && notCenter) {
+        notCenter = !centerIndexes.includes(i) && !centerIndexes.includes(i - (size + 1)) && !centerIndexes.includes(i - ((size + 1) * 2));
+
+        if (current.type === diagonalLU1.type && current.type === diagonalLU2.type && notCenter) {
           indexes.push(i);
+          indexes.push(i - (size + 1));
+          indexes.push(i - ((size + 1) * 2));
+
+          if(diagonalLU3 != null && !centerIndexes.includes(i - ((size + 1) * 3)) && current.type === diagonalLU3.type){
+            indexes.push(i - ((size + 1) * 3));
+
+            if(diagonalLU4 != null && !centerIndexes.includes(i - ((size + 1) * 4)) && current.type === diagonalLU4.type){
+              indexes.push(i - ((size + 1) * 4));
+            }
+          }
+        }
+      }
+
+      // Only check if we have at least 2 tiles remaining right and up
+      if (x <= size - 3 && y >= 2) {
+        const diagonalRU1 = tempIconList[i - (size - 1)];
+        const diagonalRU2 = tempIconList[i - ((size - 1) * 2)];
+        const diagonalRU3 = (x <= size - 4 && y >= 3) ? tempIconList[i - ((size - 1) * 3)] : null;
+        const diagonalRU4 = (x <= size - 5 && y >= 4) ? tempIconList[i - ((size - 1) * 4)] : null;
+
+        notCenter = !centerIndexes.includes(i) && !centerIndexes.includes(i - (size - 1)) && !centerIndexes.includes(i - ((size - 1) * 2));
+
+        if (current.type === diagonalRU1.type && current.type === diagonalRU2.type && notCenter) {
+          indexes.push(i);
+          indexes.push(i - (size - 1));
+          indexes.push(i - ((size - 1) * 2));
+
+          if(diagonalRU3 != null && !centerIndexes.includes(i - ((size - 1) * 3)) && current.type === diagonalRU3.type){
+            indexes.push(i - ((size - 1) * 3));
+
+            if(diagonalRU4 != null && !centerIndexes.includes(i - ((size - 1) * 4)) && current.type === diagonalRU4.type){
+              indexes.push(i - ((size - 1) * 4));
+            }
+          }
+        }
+      }
+
+      // Only check if we have at least 1 tiles remaining up left and down right
+      if ((x > 0 && x < size - 1) && (y > 0 && y < size - 1)) {
+        const diagonalUD1 = tempIconList[i - (size + 1)];
+        const diagonalUD2 = tempIconList[i + (size + 1)];
+
+        notCenter = !centerIndexes.includes(i) && !centerIndexes.includes(i - (size + 1)) && !centerIndexes.includes(i + (size + 1));
+
+        if (current.type === diagonalUD1.type && current.type === diagonalUD2.type && notCenter) {
+          indexes.push(i);
+          indexes.push(i - (size + 1));
           indexes.push(i + (size + 1));
-          indexes.push(i + ((size + 1) * 2));
         }
       }
 
-      // Only check if we have at least 2 tiles remaining left and below
-      if (x >= 2 && y <= size - 3) {
-        const diagonalLD1 = tempIconList[i + (size - 1)];
-        const diagonalLD2 = tempIconList[i + ((size - 1) * 2)];
-        notCenter = !centerIndexes.includes(i) && !centerIndexes.includes(i + (size - 1)) && !centerIndexes.includes(i + ((size - 1) * 2));
+      // Only check if we have at least 1 tiles remaining down left and up right
+      if ((x > 0 && x < size - 1) && (y > 0 && y < size - 1)) {
+        const diagonalDU1 = tempIconList[i - (size - 1)];
+        const diagonalDU2 = tempIconList[i + (size - 1)];
 
-        if (current.type === diagonalLD1.type && current.type === diagonalLD2.type && notCenter) {
+        notCenter = !centerIndexes.includes(i) && !centerIndexes.includes(i - (size - 1)) && !centerIndexes.includes(i + (size - 1));
+
+        if (current.type === diagonalDU1.type && current.type === diagonalDU2.type && notCenter) {
           indexes.push(i);
+          indexes.push(i - (size - 1));
           indexes.push(i + (size - 1));
-          indexes.push(i + ((size - 1) * 2));
         }
+      }
+
+      if(indexes > 0){
+        return indexes;
       }
     }
 
@@ -988,15 +1163,12 @@ export default function IconGrid({num, slots, time}){
         const item1 = virtualBoard[i];
         const item2 = virtualBoard[neighborIndex];
 
-        if (item1.isSlot && item2.isSlot) continue;
-
         virtualBoard[i] = { ...item2, grid: i };
         virtualBoard[neighborIndex] = { ...item1, grid: neighborIndex };
 
         const foundMatches = checkMatches(virtualBoard);
 
         if (foundMatches.length > 0) {
-          console.log(`Possible move ${i} and ${neighborIndex}`);
           return true;
         }
       }
@@ -1011,7 +1183,7 @@ export default function IconGrid({num, slots, time}){
     setIsReshuffling(true);
 
     while (!isBoardValid) {
-      for (let i = movableIcons.length - 1; i > 0; i--) {
+      for (let i = movableIcons.length - 1; i >= 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [movableIcons[i], movableIcons[j]] = [movableIcons[j], movableIcons[i]];
       }
@@ -1049,18 +1221,19 @@ export default function IconGrid({num, slots, time}){
     return false;
   }
 
-  const useTimePotion = (isFree = false) => {
-    const TIME_POTION_MIN = 15;
-    const TIME_POTION_MAX = 60;
-
-    setIsArrowActive(false);
+  const useTimePotion = (isFree = false, isBigPotion = false) => {
+    const timePotionMin = isBigPotion ? 180 : 60;
+    const timePotionMax = isBigPotion ? 300 : 120;
 
     if ((points < 1000 && !isFree) || gameOver || isCountingDown || isReshuffling || timeLeft === undefined) return;
 
-    const addTime = Math.floor(Math.random() * (TIME_POTION_MAX - TIME_POTION_MIN + 1)) + TIME_POTION_MIN;
+    setIsArrowActive(false);
+    setIsDiagonalActive(false);
+
+    const addTime = Math.floor(Math.random() * (timePotionMax - timePotionMin + 1)) + timePotionMin;
     const finalTime = timeLeft + addTime;
     const timeElement = document.querySelector('.timer-box');
-    const digits = addTime.toString().padStart(2, '0').split('').map(Number);
+    const digits = addTime.toString().padStart(3, '0').split('').map(Number);
     const offsets = digits.map(d => -(d * 200) - 200);
     
     setTimeDisplay(digits);
@@ -1068,34 +1241,243 @@ export default function IconGrid({num, slots, time}){
     setIsLooping(true);
     setIsTimePotionUsed(true);
 
+    if(!isFree){
+      updatePoints(-1000);
+    }
+
     setTimeout(() => {
       setIsLooping(false);
       
       setTimeout(() => {
         setTimeLeft(finalTime);
         setIsTimePotionUsed(false);
-        if(!isFree){
-          setPoints(prev => prev - 1000);
-        }
-        
         triggerFlash(timeElement);
       }, 500);
     }, 500);
   };
 
+  const useDropTimePotion = () => {
+    if (points < 500 || gameOver || isCountingDown || isReshuffling || timeLeft === undefined) return;
+
+    setIsArrowActive(false);
+    setIsDiagonalActive(false);
+    updatePoints(-500);
+    setPlaceTimePotion(true);
+  };
+
   const useArrow = () => {
     if (points >= 500 && !gameOver && !isCountingDown && !isReshuffling && !isLooping) {
       isArrowActive ? setIsArrowActive(false) : setIsArrowActive(true);
+      setIsDiagonalActive(false);
+    }
+  };
+
+  const useDiagonal = () => {
+    if (points >= 500 && !gameOver && !isCountingDown && !isReshuffling && !isLooping) {
+      isDiagonalActive ? setIsDiagonalActive(false) : setIsDiagonalActive(true);
+      setIsArrowActive(false);
     }
   };
 
   const useReshuffle = () => {
-    if (points >= 500 && !gameOver && !isCountingDown && !isReshuffling) {
+    if (points >= 500 && !gameOver && !isCountingDown && !isReshuffling && !isLooping) {
       setIsUserShuffle(true);
+      setIsArrowActive(false);
+      setIsDiagonalActive(false);
       setIconList(currentBoard => reshuffleBoard(currentBoard));
-      setPoints(prev => prev - 500);
+      updatePoints(-500);
     }
   };
+
+  const useHint = () => {
+    if (points >= 50 && !gameOver && !isCountingDown && !isReshuffling && !isLooping) {
+      const tempBoard = [...iconList];
+      setIsDiagonalActive(false);
+      setIsArrowActive(false);
+      updatePoints(-50);
+
+      const size = num;
+      const centerRow= (size* (size-1)) + (Math.floor(size/2));
+      const centerStartIndex = centerRow * size + (centerRow - 2);
+      const centerColumnIndexes = [centerStartIndex, centerStartIndex + 1, centerStartIndex + 2, centerStartIndex + 3, centerStartIndex + 4];
+
+      for (let i = tempBoard.length - 1; i >= 0; i--) {
+        if (centerColumnIndexes.includes(i)) continue;
+
+        const x = i % size;
+        const y = Math.floor(i / size);
+
+        const neighbors = [];
+        if (x > 0) neighbors.push(i - 1); // Left
+        if (y > 0) neighbors.push(i - size); // Up
+
+        for (let neighborIndex of neighbors) {
+          if (centerColumnIndexes.includes(neighborIndex)) continue;
+          
+          const virtualBoard = [...tempBoard];
+          const item1 = virtualBoard[i];
+          const item2 = virtualBoard[neighborIndex];
+
+          virtualBoard[i] = { ...item2, grid: i };
+          virtualBoard[neighborIndex] = { ...item1, grid: neighborIndex };
+
+          const foundMatches = checkMatch(item1, item2, virtualBoard);
+
+          if (foundMatches.length > 0) {
+            for(let index of foundMatches){
+              let iconElement = document.getElementById(tempBoard[index].id);
+              triggerGlow(iconElement);
+            }
+            return;
+          }
+        }
+      }
+    }
+    return;
+  };
+
+  const checkMatch = (item1, item2, tempIconList ) => {
+    const indexes = [];
+    const size = num;
+    const centerRow = size - 1;
+    const centerColumnSlot = Math.floor(size/2);
+    const centerColumn = [centerColumnSlot - 2, centerColumnSlot - 1, centerColumnSlot, centerColumnSlot + 1, centerColumnSlot + 2];
+    const centerIndexes = centerColumn.map(col => (centerRow * size) + col);
+    const items = [item1, item2, item1];
+  
+    for (let i = 0; i < items.length - 1; i++) {
+      const index = items[i].grid;
+      const x = index % size;
+      const y = Math.floor(index / size);
+      const current = tempIconList[index];
+      let notCenter;
+
+      // Skip nulls and empty types
+      if (!current.type) continue;
+ 
+      // Only check if we have at least 2 tiles remaining to the Left
+      if (x >= 2) {
+        const left1 = tempIconList[index - 1];
+        const left2 = tempIconList[index - 2];
+
+        notCenter = !centerIndexes.includes(index) && !centerIndexes.includes(index - 1) && !centerIndexes.includes(index - 2);
+
+        if (current.type === left1.type && current.type === left2.type && notCenter) {
+          indexes.push(items[i+1].grid);
+          indexes.push(index - 1);
+          indexes.push(index - 2);
+
+          return indexes;
+        }  
+      }
+
+      // Only check if we have at least 2 tiles remaining above
+      if (y >= 2) {
+        const up1 = tempIconList[index - size];
+        const up2 = tempIconList[index - (size * 2)];
+
+        notCenter = !centerIndexes.includes(index) && !centerIndexes.includes(index - size) && !centerIndexes.includes(index - (size * 2));
+
+        if (current.type === up1.type && current.type === up2.type && notCenter) {
+          indexes.push(items[i+1].grid);
+          indexes.push(index - size);
+          indexes.push(index - (size * 2));
+
+          return indexes;
+        }
+      }
+
+      // Only check if we have at least 1 tiles remaining left and right
+      if (x > 0 && x < size - 1) {
+        const horizontal1 = tempIconList[index - 1];
+        const horizontal2 = tempIconList[index + 1];
+
+        notCenter = !centerIndexes.includes(index) && !centerIndexes.includes(index - 1) && !centerIndexes.includes(index + 1);
+
+        if (current.type === horizontal1.type && current.type === horizontal2.type && notCenter) {
+          indexes.push(items[i+1].grid);
+          indexes.push(index - 1);
+          indexes.push(index + 1);
+        }
+      }
+
+      // Only check if we have at least 1 tiles remaining up and down
+      if (y > 0 && y < size - 1) {
+        const vertical1 = tempIconList[index - size];
+        const vertical2 = tempIconList[index + size];
+
+        notCenter = !centerIndexes.includes(index) && !centerIndexes.includes(index - size) && !centerIndexes.includes(index + size);
+
+        if (current.type === vertical1.type && current.type === vertical2.type && notCenter) {
+          indexes.push(items[i+1].grid);
+          indexes.push(index - size);
+          indexes.push(index + size);
+        }
+      }
+
+      // Only check if we have at least 2 tiles remaining left and up
+      if (x >= 2 && y >= 2) {
+        const diagonalLU1 = tempIconList[index - (size + 1)];
+        const diagonalLU2 = tempIconList[index - ((size + 1) * 2)];
+
+        notCenter = !centerIndexes.includes(index) && !centerIndexes.includes(index - (size + 1)) && !centerIndexes.includes(index - ((size + 1) * 2));
+
+        if (current.type === diagonalLU1.type && current.type === diagonalLU2.type && notCenter) {
+          indexes.push(items[i+1].grid);
+          indexes.push(index - (size + 1));
+          indexes.push(index - ((size + 1) * 2));
+          
+          return indexes;
+        }
+      }
+
+      // Only check if we have at least 2 tiles remaining right and up
+      if (x <= size - 3 && y >= 2) {
+        const diagonalRU1 = tempIconList[index - (size - 1)];
+        const diagonalRU2 = tempIconList[index - ((size - 1) * 2)];
+
+        notCenter = !centerIndexes.includes(index) && !centerIndexes.includes(index - (size - 1)) && !centerIndexes.includes(index - ((size - 1) * 2));
+
+        if (current.type === diagonalRU1.type && current.type === diagonalRU2.type && notCenter) {
+          indexes.push(items[i+1].grid);
+          indexes.push(index - (size - 1));
+          indexes.push(index - ((size - 1) * 2));
+
+          return indexes;
+        }
+      }
+
+      // Only check if we have at least 1 tiles remaining up left and down right
+      if ((x > 0 && x < size - 1) && (y > 0 && y < size - 1)) {
+        const diagonalUD1 = tempIconList[index - (size + 1)];
+        const diagonalUD2 = tempIconList[index + (size + 1)];
+
+        notCenter = !centerIndexes.includes(index) && !centerIndexes.includes(index - (size + 1)) && !centerIndexes.includes(index + (size + 1));
+
+        if (current.type === diagonalUD1.type && current.type === diagonalUD2.type && notCenter) {
+          indexes.push(items[i+1].grid);
+          indexes.push(index - (size + 1));
+          indexes.push(index + (size + 1));
+        }
+      }
+
+      // Only check if we have at least 1 tiles remaining down left and up right
+      if ((x > 0 && x < size - 1) && (y > 0 && y < size - 1)) {
+        const diagonalDU1 = tempIconList[index - (size - 1)];
+        const diagonalDU2 = tempIconList[index + (size - 1)];
+
+        notCenter = !centerIndexes.includes(index) && !centerIndexes.includes(index - (size - 1)) && !centerIndexes.includes(index + (size - 1));
+
+        if (current.type === diagonalDU1.type && current.type === diagonalDU2.type && notCenter) {
+          indexes.push(items[i+1].grid);
+          indexes.push(index - (size - 1));
+          indexes.push(index + (size - 1));
+        }
+      }
+    }
+
+    return indexes;
+  }
 
   function triggerFlash(buttonElement) {
     buttonElement.classList.add('is-flashing');
@@ -1105,26 +1487,45 @@ export default function IconGrid({num, slots, time}){
     }, 500);
   }
 
+  function triggerGlow(buttonElement) {
+    buttonElement.classList.add('is-glowing');
+  }
+
   function updatePoints(newPoints) {
     const pointsElement = document.querySelector('.points-box .value');
     setPoints(prev => prev + newPoints);
 
-    pointsElement.classList.remove('animate-bump');
-    void pointsElement.offsetWidth;
-    pointsElement.classList.add('animate-bump');
+    if(newPoints >= 0){
+      pointsElement.classList.remove('animate-bump');
+      void pointsElement.offsetWidth;
+      pointsElement.classList.add('animate-bump');
+    } else {
+      pointsElement.classList.remove('animate-spend');
+      void pointsElement.offsetWidth;
+      pointsElement.classList.add('animate-spend');
+    }
   }
 
   return (
     <div className="game-wrapper">
       <div className="side-controls">
-        <button className="time-potion-btn" onClick={useTimePotion} disabled={points < 1000 || gameOver || isCountingDown || isReshuffling || isLooping}>
+        <button className={`drop-time-potion-btn ${points < 500 || placeTimePotion ? "btn-disabled" : ''}`} onClick={useDropTimePotion} disabled={points < 500 || placeTimePotion || gameOver || isCountingDown || isReshuffling || isLooping || placeTimePotion}>
+          <span><img src="/icons/Time_Potion_Icon.png" alt="Drop Time Potion" /></span> Drop Time Potion: (500pts)
+        </button>
+        <button className={`time-potion-btn ${points < 1000 ? "btn-disabled" : ''}`} onClick={() => useTimePotion(false, true)} disabled={points < 1000 || gameOver || isCountingDown || isReshuffling || isLooping}>
           <span><img src="/icons/Time_Potion_Icon.png" alt="Time Potion" /></span> Time Potion: (1000pts)
         </button>
-        <button className={`arrow-btn ${isArrowActive ? 'arrow-btn-active' : ''}`} onClick={useArrow} disabled={points < 500 || gameOver || isCountingDown || isReshuffling || isLooping}>
+        <button className={`arrow-btn ${isArrowActive ? 'arrow-btn-active' : ''} ${points < 500 ? "btn-disabled" : ''}`} onClick={useArrow} disabled={points < 500 || gameOver || isCountingDown || isReshuffling || isLooping}>
           <span><img src="/icons/Arrow_Icon.png" alt="Arrow" /></span> Arrow: (500pts)
         </button>
-        <button className={`reshuffle-btn`} onClick={useReshuffle} disabled={points < 500 || gameOver || isCountingDown || isReshuffling || isLooping}>
+        <button className={`diagonal-btn ${isDiagonalActive ? 'arrow-btn-active' : ''} ${points < 500 ? "btn-disabled" : ''}`} onClick={useDiagonal} disabled={points < 500 || gameOver || isCountingDown || isReshuffling || isLooping}>
+          <span><img src="/icons/Diagonal_Icon.png" alt="Diagonal" /></span> Diagonal: (500pts)
+        </button>
+        <button className={`reshuffle-btn ${points < 500 ? "btn-disabled" : ''}`} onClick={useReshuffle} disabled={points < 500 || gameOver || isCountingDown || isReshuffling || isLooping}>
           <span><img src="/icons/Reshuffle_Icon.png" alt="Reshuffle" /></span> Reshuffle: (500pts)
+        </button>
+        <button className={`hint-btn ${points < 50 ? "btn-disabled" : ''}`} onClick={useHint} disabled={points < 50 || gameOver || isCountingDown || isReshuffling || isLooping}>
+          <span><img src="/icons/Hint_Icon.png" alt="Hint" /></span> Hint: (50pts)
         </button>
       </div>
 
@@ -1201,7 +1602,7 @@ export default function IconGrid({num, slots, time}){
             {isTimePotionUsed && (
               <div className="time-add-overlay">
                 <div className="time-add-frame">
-                  {[0, 1].map((i) => (
+                  {[0, 1, 2].map((i) => (
                     <div key={i} className="time-add-reel" draggable="false">
                       <div 
                         className={`time-add-strip ${isLooping ? 'time-add-is-spinning' : 'time-add-landed'}`}
