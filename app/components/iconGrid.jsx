@@ -668,7 +668,7 @@ export default function IconGrid({num, slots, time}){
 
       // Check if diagonal was used and adjust
       if(isDiagonalActive){
-        updatePoints(-500);
+        updatePoints(-250);
         setIsDiagonalActive(false);
       }
 
@@ -1257,11 +1257,11 @@ export default function IconGrid({num, slots, time}){
   };
 
   const useDropTimePotion = () => {
-    if (points < 500 || gameOver || isCountingDown || isReshuffling || timeLeft === undefined) return;
+    if (points < 250 || gameOver || isCountingDown || isReshuffling || timeLeft === undefined) return;
 
     setIsArrowActive(false);
     setIsDiagonalActive(false);
-    updatePoints(-500);
+    updatePoints(-250);
     setPlaceTimePotion(true);
   };
 
@@ -1273,7 +1273,7 @@ export default function IconGrid({num, slots, time}){
   };
 
   const useDiagonal = () => {
-    if (points >= 500 && !gameOver && !isCountingDown && !isReshuffling && !isLooping) {
+    if (points >= 250 && !gameOver && !isCountingDown && !isReshuffling && !isLooping) {
       isDiagonalActive ? setIsDiagonalActive(false) : setIsDiagonalActive(true);
       setIsArrowActive(false);
     }
@@ -1509,8 +1509,8 @@ export default function IconGrid({num, slots, time}){
   return (
     <div className="game-wrapper">
       <div className="side-controls">
-        <button className={`drop-time-potion-btn ${points < 500 || placeTimePotion ? "btn-disabled" : ''}`} onClick={useDropTimePotion} disabled={points < 500 || placeTimePotion || gameOver || isCountingDown || isReshuffling || isLooping || placeTimePotion}>
-          <span><img src="/icons/Time_Potion_Icon.png" alt="Drop Time Potion" /></span> Drop Time Potion: (500pts)
+        <button className={`drop-time-potion-btn ${points < 250 || placeTimePotion ? "btn-disabled" : ''}`} onClick={useDropTimePotion} disabled={points < 250 || placeTimePotion || gameOver || isCountingDown || isReshuffling || isLooping || placeTimePotion}>
+          <span><img src="/icons/Time_Potion_Icon.png" alt="Drop Time Potion" /></span> Drop Time Potion: (250pts)
         </button>
         <button className={`time-potion-btn ${points < 1000 ? "btn-disabled" : ''}`} onClick={() => useTimePotion(false, true)} disabled={points < 1000 || gameOver || isCountingDown || isReshuffling || isLooping}>
           <span><img src="/icons/Time_Potion_Icon.png" alt="Time Potion" /></span> Time Potion: (1000pts)
@@ -1518,8 +1518,8 @@ export default function IconGrid({num, slots, time}){
         <button className={`arrow-btn ${isArrowActive ? 'arrow-btn-active' : ''} ${points < 500 ? "btn-disabled" : ''}`} onClick={useArrow} disabled={points < 500 || gameOver || isCountingDown || isReshuffling || isLooping}>
           <span><img src="/icons/Arrow_Icon.png" alt="Arrow" /></span> Arrow: (500pts)
         </button>
-        <button className={`diagonal-btn ${isDiagonalActive ? 'arrow-btn-active' : ''} ${points < 500 ? "btn-disabled" : ''}`} onClick={useDiagonal} disabled={points < 500 || gameOver || isCountingDown || isReshuffling || isLooping}>
-          <span><img src="/icons/Diagonal_Icon.png" alt="Diagonal" /></span> Diagonal: (500pts)
+        <button className={`diagonal-btn ${isDiagonalActive ? 'arrow-btn-active' : ''} ${points < 250 ? "btn-disabled" : ''}`} onClick={useDiagonal} disabled={points < 250 || gameOver || isCountingDown || isReshuffling || isLooping}>
+          <span><img src="/icons/Diagonal_Icon.png" alt="Diagonal" /></span> Diagonal: (250pts)
         </button>
         <button className={`reshuffle-btn ${points < 500 ? "btn-disabled" : ''}`} onClick={useReshuffle} disabled={points < 500 || gameOver || isCountingDown || isReshuffling || isLooping}>
           <span><img src="/icons/Reshuffle_Icon.png" alt="Reshuffle" /></span> Reshuffle: (500pts)
